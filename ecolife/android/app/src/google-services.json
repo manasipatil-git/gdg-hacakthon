@@ -12,7 +12,12 @@
           "package_name": "com.ecolife.app"
         }
       },
-      "oauth_client": [],
+      "oauth_client": [
+        {
+          "client_id": "1020174249129-oe30ani84cn44qk3nc2s813vu2h1funa.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
       "api_key": [
         {
           "current_key": "AIzaSyAAJq3eNc4IhDOHLY0U8V0rGgYlPfrZqYk"
@@ -20,7 +25,41 @@
       ],
       "services": {
         "appinvite_service": {
-          "other_platform_oauth_client": []
+          "other_platform_oauth_client": [
+            {
+              "client_id": "1020174249129-oe30ani84cn44qk3nc2s813vu2h1funa.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:1020174249129:android:9458c18e4ade3d9b58cdb8",
+        "android_client_info": {
+          "package_name": "com.example.ecolife"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "1020174249129-oe30ani84cn44qk3nc2s813vu2h1funa.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAAJq3eNc4IhDOHLY0U8V0rGgYlPfrZqYk"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "1020174249129-oe30ani84cn44qk3nc2s813vu2h1funa.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
         }
       }
     }
