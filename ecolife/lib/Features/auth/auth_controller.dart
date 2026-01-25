@@ -1,17 +1,63 @@
-import '../../core/services/auth_service.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import '../../core/services/firestore_service.dart';
 
 class AuthController {
-  final AuthService _authService = AuthService();
+  final FirebaseAuth _auth = FirebaseAuth.instance;
+  final FirestoreService _firestore = FirestoreService();
 
-  Future<void> login(String email, String password) async {
-    await _authService.loginWithEmail(email, password);
+  /// ─────────────────────────────
+  /// SIGN UP USER
+  /// ─────────────────────────────
+  Future<void> signup(
+    String name,
+    String email,
+    String password,
+  ) async {
+    // 1️⃣ Create user in Firebase Auth
+    final UserCredential credential =
+        await _auth.createUserWithEmailAndPassword(
+      email: email,
+      password: password,
+    );
+
+    final String uid = credential.user!.uid;
+
+    // 2️⃣ Create Firestore user document
+    await _firestore.createUser(
+      uid: uid,
+      name: name,
+      email: email,
+    );
   }
 
-  Future<void> signup(String name, String email, String password) async {
-    await _authService.signupWithEmail(name, email, password);
+  /// ─────────────────────────────
+  /// LOGIN USER (decides next route)
+  /// ─────────────────────────────
+  Future<String> login(
+    String email,
+    String password,
+  ) async {
+    // 1️⃣ Login with Firebase Auth
+    final UserCredential credential =
+        await _auth.signInWithEmailAndPassword(
+      email: email,
+      password: password,
+    );
+
+    final String uid = credential.user!.uid;
+
+    // 2️⃣ Check onboarding status
+    final bool completed =
+        await _firestore.isOnboardingCompleted(uid);
+
+    // 3️⃣ Tell UI where to go
+    return completed ? '/dashboard' : '/onboarding';
   }
 
-  Future<void> googleLogin() async {
-    await _authService.loginWithGoogle();
+  /// ─────────────────────────────
+  /// LOGOUT USER
+  /// ─────────────────────────────
+  Future<void> logout() async {
+    await _auth.signOut();
   }
 }

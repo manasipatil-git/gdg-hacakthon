@@ -8,13 +8,13 @@ class EcoLifeApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'EcoLife',
       debugShowCheckedModeBanner: false,
+      title: 'EcoLife',
       theme: ThemeData(
         scaffoldBackgroundColor: AppColors.background,
         fontFamily: 'Poppins',
       ),
-      initialRoute: '/',
+      initialRoute: '/', // ✅ CORRECT
       onGenerateRoute: AppRouter.generateRoute,
     );
   }

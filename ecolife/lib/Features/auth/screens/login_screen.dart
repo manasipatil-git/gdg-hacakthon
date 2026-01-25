@@ -16,7 +16,10 @@ class LoginScreen extends StatelessWidget {
       body: Stack(
         children: [
           Positioned.fill(
-            child: Image.asset('assets/images/sloth_bg.png', fit: BoxFit.cover),
+            child: Image.asset(
+              'assets/images/sloth_bg.png',
+              fit: BoxFit.cover,
+            ),
           ),
           SafeArea(
             child: Padding(
@@ -26,16 +29,36 @@ class LoginScreen extends StatelessWidget {
                   const SizedBox(height: 60),
                   Image.asset('assets/images/logo.png', height: 64),
                   const SizedBox(height: 40),
-                  AuthTextField(hint: 'Email', controller: _email),
+
+                  AuthTextField(
+                    hint: 'Email',
+                    controller: _email,
+                  ),
                   AuthTextField(
                     hint: 'Password',
                     controller: _password,
                     isPassword: true,
                   ),
+
                   const SizedBox(height: 20),
+
+                  /// ✅ FIXED LOGIN BUTTON
                   ElevatedButton(
-                    onPressed: () {
-                      _auth.login(_email.text, _password.text);
+                    onPressed: () async {
+                      try {
+                        final nextRoute = await _auth.login(
+                          _email.text.trim(),
+                          _password.text.trim(),
+                        );
+
+                        Navigator.pushReplacementNamed(
+                          context, nextRoute,
+                        );
+                      } catch (e) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(content: Text(e.toString())),
+                        );
+                      }
                     },
                     style: ElevatedButton.styleFrom(
                       backgroundColor: AppColors.accentGreen,

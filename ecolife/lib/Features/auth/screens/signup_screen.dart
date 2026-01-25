@@ -17,7 +17,10 @@ class SignupScreen extends StatelessWidget {
       body: Stack(
         children: [
           Positioned.fill(
-            child: Image.asset('assets/images/sloth_bg.png', fit: BoxFit.cover),
+            child: Image.asset(
+              'assets/images/sloth_bg.png',
+              fit: BoxFit.cover,
+            ),
           ),
           SafeArea(
             child: Padding(
@@ -27,21 +30,45 @@ class SignupScreen extends StatelessWidget {
                   const SizedBox(height: 60),
                   Image.asset('assets/images/logo.png', height: 64),
                   const SizedBox(height: 40),
-                  AuthTextField(hint: 'Your Name', controller: _name),
-                  AuthTextField(hint: 'Email', controller: _email),
+
+                  AuthTextField(
+                    hint: 'Your Name',
+                    controller: _name,
+                  ),
+                  AuthTextField(
+                    hint: 'Email',
+                    controller: _email,
+                  ),
                   AuthTextField(
                     hint: 'Password',
                     controller: _password,
                     isPassword: true,
                   ),
+
                   const SizedBox(height: 20),
+
+                  /// ✅ FIXED SIGNUP BUTTON
                   ElevatedButton(
-                    onPressed: () {
-                      _auth.signup(
-                        _name.text,
-                        _email.text,
-                        _password.text,
-                      );
+                    onPressed: () async {
+                      try {
+                        await _auth.signup(
+                          _name.text.trim(),
+                          _email.text.trim(),
+                          _password.text.trim(),
+                        );
+
+                        // ✅ MOVE FORWARD AFTER SIGNUP
+                        Navigator.pushReplacementNamed(
+                          context,
+                          '/onboarding',
+                        );
+                      } catch (e) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(
+                            content: Text(e.toString()),
+                          ),
+                        );
+                      }
                     },
                     style: ElevatedButton.styleFrom(
                       backgroundColor: AppColors.accentGreen,

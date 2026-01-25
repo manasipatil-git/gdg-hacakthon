@@ -3,28 +3,29 @@ import '../onboarding_controller.dart';
 import '../widgets/onboarding_option_tile.dart';
 import '../widgets/onboarding_continue_button.dart';
 
-class OnboardingCollegeScreen extends StatefulWidget {
-  const OnboardingCollegeScreen({super.key});
+class OnboardingTravelScreen extends StatefulWidget {
+  const OnboardingTravelScreen({super.key});
 
   @override
-  State<OnboardingCollegeScreen> createState() =>
-      _OnboardingCollegeScreenState();
+  State<OnboardingTravelScreen> createState() =>
+      _OnboardingTravelScreenState();
 }
 
-class _OnboardingCollegeScreenState extends State<OnboardingCollegeScreen> {
-  final controller = OnboardingController();
+class _OnboardingTravelScreenState extends State<OnboardingTravelScreen> {
   String? selected;
 
-  final colleges = [
-    'IIT Mumbai',
-    'BITS Pilani',
-    'MGMCET',
-    'AP Shah',
-    'KJ Somaiya',
+  final options = [
+    'Public Transport',
+    'Local Train',
+    'Motorbike',
+    'Car',
   ];
 
   @override
   Widget build(BuildContext context) {
+    final controller =
+        ModalRoute.of(context)!.settings.arguments as OnboardingController;
+
     return Scaffold(
       body: SafeArea(
         child: Padding(
@@ -32,25 +33,19 @@ class _OnboardingCollegeScreenState extends State<OnboardingCollegeScreen> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const SizedBox(height: 12),
               const Text(
-                "What's your college? 🎓",
+                'How do you commute? 🚶‍♂️',
                 style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
-              ),
-              const SizedBox(height: 6),
-              const Text(
-                "We'll connect you with your campus community",
-                style: TextStyle(color: Colors.black54),
               ),
               const SizedBox(height: 24),
 
               Expanded(
                 child: ListView(
-                  children: colleges.map((college) {
+                  children: options.map((o) {
                     return OnboardingOptionTile(
-                      text: college,
-                      selected: selected == college,
-                      onTap: () => setState(() => selected = college),
+                      text: o,
+                      selected: selected == o,
+                      onTap: () => setState(() => selected = o),
                     );
                   }).toList(),
                 ),
@@ -59,10 +54,10 @@ class _OnboardingCollegeScreenState extends State<OnboardingCollegeScreen> {
               OnboardingContinueButton(
                 enabled: selected != null,
                 onPressed: () {
-                  controller.setCollege(selected!);
+                  controller.setTransport(selected!);
                   Navigator.pushNamed(
                     context,
-                    '/onboarding-accommodation',
+                    '/onboarding-notifications',
                     arguments: controller,
                   );
                 },
@@ -74,3 +69,4 @@ class _OnboardingCollegeScreenState extends State<OnboardingCollegeScreen> {
     );
   }
 }
+
