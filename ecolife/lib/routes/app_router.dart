@@ -87,7 +87,7 @@ case '/onboarding-notifications':
       // -------- OTHER --------
       case '/log':
         return MaterialPageRoute(
-          builder: (_) => const LogQuizScreen(),
+          builder: (_) => const LogScreen(),
         );
 
       case '/leaderboard':

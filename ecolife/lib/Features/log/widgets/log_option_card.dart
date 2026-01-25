@@ -19,13 +19,13 @@ class LogOptionTile extends StatelessWidget {
       onTap: onTap,
       child: Container(
         width: double.infinity,
-        padding: const EdgeInsets.symmetric(vertical: 20, horizontal: 18),
+        padding: const EdgeInsets.symmetric(vertical: 22, horizontal: 18),
         margin: const EdgeInsets.only(bottom: 16),
         decoration: BoxDecoration(
           color: selected
               ? AppColors.primary.withOpacity(0.12)
               : Colors.white,
-          borderRadius: BorderRadius.circular(16),
+          borderRadius: BorderRadius.circular(18),
           border: Border.all(
             color: selected ? AppColors.primary : Colors.grey.shade300,
             width: 1.5,
