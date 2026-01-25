@@ -9,7 +9,7 @@ import '../features/auth/screens/signup_screen.dart';
 import '../features/dashboard/screens/dashboard_screen.dart';
 
 // LOG
-import '../features/log/screens/log_home_screen.dart';
+import '../features/log/screens/log_quiz_screen.dart';
 
 // LEADERBOARD
 import '../features/leaderboard/screens/leaderboard_screen.dart';
@@ -87,7 +87,7 @@ case '/onboarding-notifications':
       // -------- OTHER --------
       case '/log':
         return MaterialPageRoute(
-          builder: (_) => const LogHomeScreen(),
+          builder: (_) => const LogQuizScreen(),
         );
 
       case '/leaderboard':

@@ -18,4 +18,5 @@ class AppColors {
   static const primary = Color(0xFF2DBE91);
   static const accent = Color(0xFFFFE9CC);
   static const muted = Color(0xFF7D9A92);
+  static const Color card = Color.fromARGB(255, 255, 245, 245);
 }
