@@ -1,4 +1,5 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:flutter/material.dart';
 import '../models/user_model.dart';
 
 class FirestoreService {
@@ -19,8 +20,8 @@ class FirestoreService {
       'email': email,
       'college': '',
       'hostel': '',
-      'totalPoints': 0,        // ecoScore
-      'currentStreak': 0,      // streak
+      'totalPoints': 0, // ecoScore
+      'currentStreak': 0, // streak
       'avgScore': 0,
       'onboardingCompleted': false,
       'leaderboardOptIn': true,
@@ -45,7 +46,7 @@ class FirestoreService {
     });
   }
 
-  /// Fetch FULL user for Provider (STEP 4 CORE)
+  /// Fetch FULL user for Provider
   Future<UserModel> fetchUser(String uid) async {
     final doc = await _db.collection('users').doc(uid).get();
 
@@ -63,7 +64,7 @@ class FirestoreService {
     );
   }
 
-  /// Fetch user name (used earlier – still valid)
+  /// Fetch user name (used earlier)
   Future<String> getUserName(String uid) async {
     final doc = await _db.collection('users').doc(uid).get();
 
@@ -78,62 +79,77 @@ class FirestoreService {
    ECO LIFE CORE LOGIC
   ───────────────────────────── */
 
-  /// Add a test trip (HACKATHON HAPPY PATH)
+  /// Add a test trip (DEMO / HACKATHON HAPPY PATH)
   Future<void> addTestTrip(String uid) async {
-    final today = DateTime.now().toIso8601String().split('T')[0];
+    try {
+      debugPrint("🚀 addTestTrip START for uid: $uid");
 
-    final dailyLogRef = _db
-        .collection('dailyLogs')
-        .doc(uid)
-        .collection('logs')
-        .doc(today);
+      final today = DateTime.now().toIso8601String().split('T')[0];
 
-    // 1️⃣ Ensure daily log exists
-    await dailyLogRef.set({
-      'date': today,
-      'createdAt': FieldValue.serverTimestamp(),
-      'totalDayEmissions': 0,
-      'dailyScore': 0,
-      'pointsEarned': 0,
-    }, SetOptions(merge: true));
+      final dailyLogRef = _db
+          .collection('dailyLogs')
+          .doc(uid)
+          .collection('logs')
+          .doc(today);
 
-    // 2️⃣ Add trip
-    await dailyLogRef.update({
-      'trips': FieldValue.arrayUnion([
-        {
-          'mode': 'bus',
-          'distanceKm': 5,
-          'emissions': 5,
-          'timestamp': Timestamp.now(),
-        }
-      ]),
-      'totalDayEmissions': FieldValue.increment(5),
-    });
+      // 1️⃣ Ensure daily log exists
+      await dailyLogRef.set({
+        'date': today,
+        'createdAt': FieldValue.serverTimestamp(),
+        'totalDayEmissions': 0,
+        'dailyScore': 0,
+        'pointsEarned': 0,
+      }, SetOptions(merge: true));
 
-    // 3️⃣ Recalculate emissions & score
-    final snapshot = await dailyLogRef.get();
-    final totalEmissions = snapshot.data()?['totalDayEmissions'] ?? 0;
+      debugPrint("✅ daily log ensured");
 
-    final num dailyScore =
-        (100 - (totalEmissions * 10)).clamp(0, 100);
+      // 2️⃣ Add trip
+      await dailyLogRef.update({
+        'trips': FieldValue.arrayUnion([
+          {
+            'mode': 'bus',
+            'distanceKm': 5,
+            'emissions': 5,
+            'timestamp': Timestamp.now(),
+          }
+        ]),
+        'totalDayEmissions': FieldValue.increment(5),
+      });
 
-    // 4️⃣ Calculate points
-    int points = 0;
-    if (dailyScore >= 85) {
-      points = 10;
-    } else if (dailyScore >= 70) {
-      points = 5;
+      debugPrint("✅ trip added");
+
+      // 3️⃣ Recalculate emissions & score
+      final snapshot = await dailyLogRef.get();
+      final totalEmissions = snapshot.data()?['totalDayEmissions'] ?? 0;
+
+      final num dailyScore =
+          (100 - (totalEmissions * 10)).clamp(0, 100);
+
+      int points = 0;
+      if (dailyScore >= 85) {
+        points = 10;
+      } else if (dailyScore >= 70) {
+        points = 5;
+      }
+
+      debugPrint("🧮 dailyScore=$dailyScore | points=$points");
+
+      // 4️⃣ Update daily score + points
+      await dailyLogRef.update({
+        'dailyScore': dailyScore,
+        'pointsEarned': points,
+      });
+
+      debugPrint("✅ daily score updated");
+
+      // 5️⃣ Update user ecoScore (totalPoints)
+      await _db.collection('users').doc(uid).update({
+        'totalPoints': FieldValue.increment(points),
+      });
+
+      debugPrint("🔥 totalPoints incremented by $points");
+    } catch (e) {
+      debugPrint("❌ addTestTrip FAILED: $e");
     }
-
-    // 5️⃣ Update daily score + points
-    await dailyLogRef.update({
-      'dailyScore': dailyScore,
-      'pointsEarned': points,
-    });
-
-    // 6️⃣ Update user total points (ecoScore)
-    await _db.collection('users').doc(uid).update({
-      'totalPoints': FieldValue.increment(points),
-    });
   }
 }

@@ -14,27 +14,40 @@ import '../widgets/quick_actions.dart';
 import '../widgets/active_challenge_card.dart';
 import '../widgets/leaderboard_preview.dart';
 
-class DashboardScreen extends StatelessWidget {
+class DashboardScreen extends StatefulWidget {
   const DashboardScreen({super.key});
 
   @override
-  Widget build(BuildContext context) {
-    final userProvider = context.watch<UserProvider>();
-    final user = userProvider.user;
+  State<DashboardScreen> createState() => _DashboardScreenState();
+}
 
-    // 🔧 FALLBACK: load user if Provider is empty
-    if (user == null) {
-      final uid = FirebaseAuth.instance.currentUser?.uid;
+class _DashboardScreenState extends State<DashboardScreen> {
+  bool demoActionUsed = false;
+  bool isLoadingUser = true;
 
-      if (uid != null) {
-        FirestoreService().fetchUser(uid).then((fetchedUser) {
-          // avoid rebuild loop
-          if (context.mounted) {
-            context.read<UserProvider>().setUser(fetchedUser);
-          }
-        });
-      }
+  @override
+  void initState() {
+    super.initState();
+    _loadUser();
+  }
+
+  Future<void> _loadUser() async {
+    final uid = FirebaseAuth.instance.currentUser?.uid;
+    if (uid == null) return;
+
+    final fetchedUser = await FirestoreService().fetchUser(uid);
+
+    if (mounted) {
+      context.read<UserProvider>().setUser(fetchedUser);
+      setState(() {
+        isLoadingUser = false;
+      });
     }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final user = context.watch<UserProvider>().user;
 
     return Scaffold(
       backgroundColor: AppColors.background,
@@ -52,8 +65,8 @@ class DashboardScreen extends StatelessWidget {
 
               const SizedBox(height: 16),
 
-              /// 🔹 Eco Score Card (loading-safe)
-              if (user == null)
+              /// 🔹 Eco Score Card
+              if (isLoadingUser || user == null)
                 const EcoScoreCard(
                   score: 0,
                   streakDays: 0,
@@ -64,6 +77,64 @@ class DashboardScreen extends StatelessWidget {
                   score: user.ecoScore,
                   streakDays: user.streak,
                 ),
+
+              // ─────────────────────────────
+              // 🚧 DEMO ECO ACTION (FIXED)
+              // ─────────────────────────────
+              const SizedBox(height: 16),
+
+              SizedBox(
+                width: double.infinity,
+                height: 50,
+                child: ElevatedButton(
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: AppColors.primary,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(14),
+                    ),
+                  ),
+                  onPressed: (user == null || demoActionUsed)
+                      ? null
+                      : () async {
+                          debugPrint("DEMO ACTION CLICKED");
+
+                          final uid =
+                              FirebaseAuth.instance.currentUser!.uid;
+
+                          // 1️⃣ Log eco action
+                          await FirestoreService().addTestTrip(uid);
+
+                          // 2️⃣ Fetch updated user
+                          final updatedUser =
+                              await FirestoreService().fetchUser(uid);
+
+                          // 3️⃣ Update Provider + UI
+                          if (mounted) {
+                            context
+                                .read<UserProvider>()
+                                .setUser(updatedUser);
+                            setState(() {
+                              demoActionUsed = true;
+                            });
+                          }
+
+                          // 4️⃣ Demo feedback
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(
+                              content: Text(
+                                '🌱 Eco action logged! Score updated',
+                              ),
+                            ),
+                          );
+                        },
+                  child: Text(
+                    demoActionUsed
+                        ? '✅ Action logged for today'
+                        : '🚍 Used Public Transport Today (Demo)',
+                    style: const TextStyle(fontSize: 15),
+                  ),
+                ),
+              ),
 
               const SizedBox(height: 12),
 
