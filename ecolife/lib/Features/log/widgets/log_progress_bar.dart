@@ -21,7 +21,7 @@ class LogProgressBar extends StatelessWidget {
           style: TextStyle(
             fontSize: 16,
             color: AppColors.muted,
-            fontWeight: FontWeight.w500,
+            fontWeight: FontWeight.w600,
           ),
         ),
         const SizedBox(height: 10),

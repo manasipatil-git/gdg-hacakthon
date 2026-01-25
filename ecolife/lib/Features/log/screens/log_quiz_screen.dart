@@ -1,34 +1,66 @@
 import 'package:flutter/material.dart';
-import '../controller/log_controller.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+
 import '../widgets/log_progress_bar.dart';
 import '../widgets/log_option_card.dart';
+import '../widgets/log_summary_card.dart';
 import '../../../core/constants/colors.dart';
 
-class LogQuizScreen extends StatefulWidget {
-  const LogQuizScreen({super.key});
+class LogScreen extends StatefulWidget {
+  const LogScreen({super.key});
 
   @override
-  State<LogQuizScreen> createState() => _LogQuizScreenState();
+  State<LogScreen> createState() => _LogScreenState();
 }
 
-class _LogQuizScreenState extends State<LogQuizScreen> {
-  final controller = LogController();
+class _LogScreenState extends State<LogScreen> {
   int step = 1;
+  int totalScore = 0;
   String? selected;
+  bool showSummary = false;
 
-  void next(String key, String value, int points) async {
-    controller.addAnswer(key, value, points);
+  String? transport;
+  String? food;
+  String? energy;
 
-    if (step == 3) {
-      await controller.submit();
-      if (!mounted) return;
-      Navigator.pushReplacementNamed(context, '/dashboard');
-    } else {
-      setState(() {
-        step++;
-        selected = null;
-      });
-    }
+  final transportOptions = const {
+    'Public Transport': 5,
+    'Bike': 3,
+    'Car': 0,
+  };
+
+  final foodOptions = const {
+    'Veg': 4,
+    'Mixed Diet': 2,
+    'Non-Veg': 0,
+  };
+
+  final energyOptions = const {
+    'Fan': 3,
+    'AC': 0,
+  };
+
+  Future<void> _submit() async {
+    final uid = FirebaseAuth.instance.currentUser!.uid;
+    final today = DateTime.now().toIso8601String().split('T').first;
+
+    await FirebaseFirestore.instance
+        .collection('daily_logs')
+        .doc('${uid}_$today')
+        .set({
+      'uid': uid,
+      'date': today,
+      'transport': transport,
+      'food': food,
+      'energy': energy,
+      'scoreAdded': totalScore,
+      'createdAt': FieldValue.serverTimestamp(),
+    });
+
+    await FirebaseFirestore.instance.collection('users').doc(uid).update({
+      'ecoScore': FieldValue.increment(totalScore),
+    });
   }
 
   @override
@@ -38,86 +70,103 @@ class _LogQuizScreenState extends State<LogQuizScreen> {
       body: SafeArea(
         child: Padding(
           padding: const EdgeInsets.all(20),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              LogProgressBar(step: step, total: 3),
-              const SizedBox(height: 32),
-
-              Text(
-                step == 1
-                    ? 'How did you travel today?'
-                    : step == 2
-                        ? 'What did you eat today?'
-                        : 'Which appliance did you use most?',
-                style: const TextStyle(
-                  fontSize: 26,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-
-              const SizedBox(height: 28),
-
-              if (step == 1) ...[
-                LogOptionTile(
-                  text: 'Public Transport',
-                  selected: selected == 'Public',
-                  onTap: () {
-                    setState(() => selected = 'Public');
-                    next('transport', 'Public', 5);
-                  },
-                ),
-                LogOptionTile(
-                  text: 'Bike',
-                  selected: selected == 'Bike',
-                  onTap: () {
-                    setState(() => selected = 'Bike');
-                    next('transport', 'Bike', 3);
-                  },
-                ),
-              ],
-
-              if (step == 2) ...[
-                LogOptionTile(
-                  text: 'Veg',
-                  selected: selected == 'Veg',
-                  onTap: () {
-                    setState(() => selected = 'Veg');
-                    next('food', 'Veg', 4);
-                  },
-                ),
-                LogOptionTile(
-                  text: 'Mixed Diet',
-                  selected: selected == 'Mixed',
-                  onTap: () {
-                    setState(() => selected = 'Mixed');
-                    next('food', 'Mixed', 2);
-                  },
-                ),
-              ],
-
-              if (step == 3) ...[
-                LogOptionTile(
-                  text: 'Fan',
-                  selected: selected == 'Fan',
-                  onTap: () {
-                    setState(() => selected = 'Fan');
-                    next('energy', 'Fan', 3);
-                  },
-                ),
-                LogOptionTile(
-                  text: 'AC',
-                  selected: selected == 'AC',
-                  onTap: () {
-                    setState(() => selected = 'AC');
-                    next('energy', 'AC', 0);
-                  },
-                ),
-              ],
-            ],
-          ),
+          child: showSummary ? _summaryView() : _logView(),
         ),
       ),
+    );
+  }
+
+  Widget _logView() {
+    final options = step == 1
+        ? transportOptions
+        : step == 2
+            ? foodOptions
+            : energyOptions;
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        LogProgressBar(step: step, total: 3),
+        const SizedBox(height: 32),
+        Text(
+          step == 1
+              ? 'How did you travel today?'
+              : step == 2
+                  ? 'What did you eat today?'
+                  : 'Which appliance did you use most?',
+          style: const TextStyle(
+            fontSize: 26,
+            fontWeight: FontWeight.bold,
+          ),
+        ),
+        const SizedBox(height: 28),
+        ...options.entries.map((e) {
+          return LogOptionTile(
+            text: e.key,
+            selected: selected == e.key,
+            onTap: () {
+              setState(() {
+                selected = e.key;
+                totalScore += e.value;
+
+                if (step == 1) transport = e.key;
+                if (step == 2) food = e.key;
+                if (step == 3) energy = e.key;
+              });
+
+              Future.delayed(const Duration(milliseconds: 250), () {
+                if (step == 3) {
+                  setState(() => showSummary = true);
+                } else {
+                  setState(() {
+                    step++;
+                    selected = null;
+                  });
+                }
+              });
+            },
+          );
+        }),
+      ],
+    );
+  }
+
+  Widget _summaryView() {
+    return Column(
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: [
+        const Text(
+          'Today’s Impact 🌱',
+          style: TextStyle(
+            fontSize: 28,
+            fontWeight: FontWeight.bold,
+          ),
+        ),
+        const SizedBox(height: 24),
+        LogSummaryCard(score: totalScore),
+        const SizedBox(height: 40),
+        SizedBox(
+          width: double.infinity,
+          height: 54,
+          child: ElevatedButton(
+            onPressed: () async {
+              await _submit();
+              if (!mounted) return;
+              Navigator.pushReplacementNamed(context, '/dashboard');
+            },
+            style: ElevatedButton.styleFrom(
+              backgroundColor: AppColors.primary,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(30),
+              ),
+            ),
+            child: const Text(
+              'Finish',
+              style: TextStyle(fontSize: 18),
+            ),
+          ),
+        ),
+      ],
     );
   }
 }
