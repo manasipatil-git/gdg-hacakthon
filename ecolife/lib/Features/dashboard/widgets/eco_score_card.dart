@@ -4,15 +4,30 @@ import '../../../core/constants/colors.dart';
 class EcoScoreCard extends StatelessWidget {
   final int score;
   final int streakDays;
+  final bool isLoading;
 
   const EcoScoreCard({
     super.key,
     required this.score,
     required this.streakDays,
+    this.isLoading = false,
   });
 
   @override
   Widget build(BuildContext context) {
+    // 🔄 Loading state (for demo & async fetch)
+    if (isLoading) {
+      return Container(
+        padding: const EdgeInsets.all(24),
+        decoration: BoxDecoration(
+          color: AppColors.white,
+          borderRadius: BorderRadius.circular(20),
+        ),
+        child: const Center(child: CircularProgressIndicator()),
+      );
+    }
+
+    // ✅ Normal state
     return Container(
       padding: const EdgeInsets.all(24),
       decoration: BoxDecoration(

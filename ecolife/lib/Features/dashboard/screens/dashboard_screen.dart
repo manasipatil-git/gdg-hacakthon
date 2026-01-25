@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
-import 'package:firebase_auth/firebase_auth.dart';
+import 'package:provider/provider.dart';
 
 import '../../../core/constants/colors.dart';
-import '../../../core/services/firestore_service.dart';
+import '../../../core/providers/user_provider.dart';
 
 // Widgets
 import '../widgets/greeting_header.dart';
@@ -17,7 +17,8 @@ class DashboardScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final uid = FirebaseAuth.instance.currentUser!.uid;
+    final userProvider = context.watch<UserProvider>();
+    final user = userProvider.user;
 
     return Scaffold(
       backgroundColor: AppColors.background,
@@ -28,25 +29,25 @@ class DashboardScreen extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              /// 🔹 Greeting Header (dynamic from Firestore)
-              FutureBuilder<String>(
-                future: FirestoreService().getUserName(uid),
-                builder: (context, snapshot) {
-                  final name = snapshot.hasData && snapshot.data!.isNotEmpty
-                      ? snapshot.data!
-                      : 'there';
-
-                  return GreetingHeader(name: name);
-                },
+              /// 🔹 Greeting Header (FROM PROVIDER)
+              GreetingHeader(
+                name: user?.name.isNotEmpty == true ? user!.name : 'there',
               ),
 
               const SizedBox(height: 16),
 
-              /// 🔹 Eco score (TEMP static – backend wiring next)
-              const EcoScoreCard(
-                score: 78,
-                streakDays: 5,
-              ),
+              /// 🔹 Eco Score Card (DYNAMIC + DEMO SAFE)
+              if (user == null)
+                const EcoScoreCard(
+                  score: 0,
+                  streakDays: 0,
+                  isLoading: true,
+                )
+              else
+                EcoScoreCard(
+                  score: user.ecoScore,
+                  streakDays: user.streak,
+                ),
 
               const SizedBox(height: 12),
 
@@ -69,14 +70,6 @@ class DashboardScreen extends StatelessWidget {
               const LeaderboardPreview(),
 
               const SizedBox(height: 32),
-
-              /// 🔥 TEMP TEST BUTTON (REMOVE BEFORE FINAL SUBMISSION)
-              ElevatedButton(
-                onPressed: () async {
-                  await FirestoreService().addTestTrip(uid);
-                },
-                child: const Text('Add Test Trip'),
-              ),
             ],
           ),
         ),
