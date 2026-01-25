@@ -16,14 +16,13 @@ class SignupScreen extends StatelessWidget {
     return Scaffold(
       backgroundColor: AppColors.background,
       body: SafeArea(
-        child: Padding(
+        child: SingleChildScrollView(
           padding: const EdgeInsets.symmetric(horizontal: 28),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.center,
             children: [
               const SizedBox(height: 24),
 
-              // 🔰 LOGO
               const Text(
                 'EcoLife',
                 style: TextStyle(
@@ -34,7 +33,6 @@ class SignupScreen extends StatelessWidget {
 
               const SizedBox(height: 24),
 
-              // 🦥 SLOTH
               Image.asset(
                 'assets/images/sloth_smile.png',
                 height: 180,
@@ -70,7 +68,6 @@ class SignupScreen extends StatelessWidget {
 
               const SizedBox(height: 24),
 
-              // 🔘 CTA
               SizedBox(
                 width: double.infinity,
                 height: 54,
@@ -105,7 +102,7 @@ class SignupScreen extends StatelessWidget {
                 ),
               ),
 
-              const Spacer(),
+              const SizedBox(height: 40),
             ],
           ),
         ),

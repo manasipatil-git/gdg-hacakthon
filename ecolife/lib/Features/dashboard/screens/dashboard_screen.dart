@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 
 import '../../../core/constants/colors.dart';
 import '../../../core/providers/user_provider.dart';
+import '../../../core/services/firestore_service.dart';
 
 // Widgets
 import '../widgets/greeting_header.dart';
@@ -20,6 +22,20 @@ class DashboardScreen extends StatelessWidget {
     final userProvider = context.watch<UserProvider>();
     final user = userProvider.user;
 
+    // 🔧 FALLBACK: load user if Provider is empty
+    if (user == null) {
+      final uid = FirebaseAuth.instance.currentUser?.uid;
+
+      if (uid != null) {
+        FirestoreService().fetchUser(uid).then((fetchedUser) {
+          // avoid rebuild loop
+          if (context.mounted) {
+            context.read<UserProvider>().setUser(fetchedUser);
+          }
+        });
+      }
+    }
+
     return Scaffold(
       backgroundColor: AppColors.background,
       bottomNavigationBar: const DashboardBottomNav(),
@@ -29,14 +45,14 @@ class DashboardScreen extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              /// 🔹 Greeting Header (FROM PROVIDER)
+              /// 🔹 Greeting Header
               GreetingHeader(
                 name: user?.name.isNotEmpty == true ? user!.name : 'there',
               ),
 
               const SizedBox(height: 16),
 
-              /// 🔹 Eco Score Card (DYNAMIC + DEMO SAFE)
+              /// 🔹 Eco Score Card (loading-safe)
               if (user == null)
                 const EcoScoreCard(
                   score: 0,

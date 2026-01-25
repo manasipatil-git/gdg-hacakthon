@@ -15,13 +15,13 @@ class LoginScreen extends StatelessWidget {
     return Scaffold(
       backgroundColor: AppColors.background,
       body: SafeArea(
-        child: Padding(
+        child: SingleChildScrollView(
           padding: const EdgeInsets.symmetric(horizontal: 28),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.center,
             children: [
-              // 🔰 LOGO SECTION (TOP)
               const SizedBox(height: 24),
+
               const Text(
                 'EcoLife',
                 style: TextStyle(
@@ -32,10 +32,9 @@ class LoginScreen extends StatelessWidget {
 
               const SizedBox(height: 20),
 
-              // 🦥 BIGGER SLOTH
               Image.asset(
                 'assets/images/sloth_hide_eyes.png',
-                height: 180, // 👈 increased from ~140
+                height: 180,
               ),
 
               const SizedBox(height: 16),
@@ -50,7 +49,6 @@ class LoginScreen extends StatelessWidget {
 
               const SizedBox(height: 32),
 
-              // ✍️ INPUTS
               AuthTextField(
                 hint: 'Email',
                 controller: _email,
@@ -64,7 +62,6 @@ class LoginScreen extends StatelessWidget {
 
               const SizedBox(height: 24),
 
-              // 🔘 LOGIN BUTTON
               SizedBox(
                 width: double.infinity,
                 height: 54,
@@ -95,7 +92,6 @@ class LoginScreen extends StatelessWidget {
 
               const SizedBox(height: 14),
 
-              // 🔗 FORGOT PASSWORD
               TextButton(
                 onPressed: () {},
                 child: const Text(
@@ -104,8 +100,7 @@ class LoginScreen extends StatelessWidget {
                 ),
               ),
 
-              // ⬇️ PUSH EVERYTHING UP, LEAVE BREATHING SPACE
-              const Spacer(),
+              const SizedBox(height: 40),
             ],
           ),
         ),

@@ -9,7 +9,7 @@ class WelcomeScreen extends StatelessWidget {
     return Scaffold(
       backgroundColor: AppColors.background,
       body: SafeArea(
-        child: Padding(
+        child: SingleChildScrollView(
           padding: const EdgeInsets.symmetric(horizontal: 28),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.center,
@@ -30,7 +30,7 @@ class WelcomeScreen extends StatelessWidget {
               // 🦥 BIG SLOTH
               Image.asset(
                 'assets/images/sloth_face.png',
-                height: 200, // 👈 bigger
+                height: 200,
               ),
 
               const SizedBox(height: 40),
@@ -49,7 +49,7 @@ class WelcomeScreen extends StatelessWidget {
                 onTap: () => Navigator.pushNamed(context, '/signup'),
               ),
 
-              const Spacer(),
+              const SizedBox(height: 40),
 
               // 📄 TERMS
               const Text(
