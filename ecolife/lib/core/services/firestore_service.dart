@@ -20,8 +20,8 @@ class FirestoreService {
       'email': email,
       'college': '',
       'hostel': '',
-      'totalPoints': 0, // ecoScore
-      'currentStreak': 0, // streak
+      'ecoScore': 0, // ✅ single source of truth
+      'currentStreak': 0,
       'avgScore': 0,
       'onboardingCompleted': false,
       'leaderboardOptIn': true,
@@ -59,20 +59,15 @@ class FirestoreService {
     return UserModel(
       uid: uid,
       name: data['name'] ?? '',
-      ecoScore: data['totalPoints'] ?? 0,
+      ecoScore: data['ecoScore'] ?? 0, // ✅ FIXED
       streak: data['currentStreak'] ?? 0,
     );
   }
 
-  /// Fetch user name (used earlier)
+  /// Fetch user name
   Future<String> getUserName(String uid) async {
     final doc = await _db.collection('users').doc(uid).get();
-
-    if (doc.exists && doc.data()?['name'] != null) {
-      return doc.data()!['name'];
-    }
-
-    return '';
+    return doc.data()?['name'] ?? '';
   }
 
   /* ─────────────────────────────
@@ -101,22 +96,18 @@ class FirestoreService {
         'pointsEarned': 0,
       }, SetOptions(merge: true));
 
-      debugPrint("✅ daily log ensured");
-
-      // 2️⃣ Add trip
+      // 2️⃣ Add trip (DEMO-FRIENDLY)
       await dailyLogRef.update({
         'trips': FieldValue.arrayUnion([
           {
             'mode': 'bus',
             'distanceKm': 5,
-            'emissions': 5,
+            'emissions': 1, // ✅ low emissions
             'timestamp': Timestamp.now(),
           }
         ]),
-        'totalDayEmissions': FieldValue.increment(5),
+        'totalDayEmissions': FieldValue.increment(1), // ✅ FIXED
       });
-
-      debugPrint("✅ trip added");
 
       // 3️⃣ Recalculate emissions & score
       final snapshot = await dailyLogRef.get();
@@ -132,22 +123,18 @@ class FirestoreService {
         points = 5;
       }
 
-      debugPrint("🧮 dailyScore=$dailyScore | points=$points");
-
-      // 4️⃣ Update daily score + points
+      // 4️⃣ Update daily score
       await dailyLogRef.update({
         'dailyScore': dailyScore,
         'pointsEarned': points,
       });
 
-      debugPrint("✅ daily score updated");
+      // 5️⃣ Update USER ecoScore (SAFE)
+      await _db.collection('users').doc(uid).set({
+        'ecoScore': FieldValue.increment(points),
+      }, SetOptions(merge: true));
 
-      // 5️⃣ Update user ecoScore (totalPoints)
-      await _db.collection('users').doc(uid).update({
-        'totalPoints': FieldValue.increment(points),
-      });
-
-      debugPrint("🔥 totalPoints incremented by $points");
+      debugPrint("🔥 ecoScore incremented by $points");
     } catch (e) {
       debugPrint("❌ addTestTrip FAILED: $e");
     }
