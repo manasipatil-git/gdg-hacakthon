@@ -14,76 +14,101 @@ class SignupScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: Stack(
-        children: [
-          Positioned.fill(
-            child: Image.asset(
-              'assets/images/sloth_bg.png',
-              fit: BoxFit.cover,
-            ),
-          ),
-          SafeArea(
-            child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 28),
-              child: Column(
-                children: [
-                  const SizedBox(height: 60),
-                  Image.asset('assets/images/logo.png', height: 64),
-                  const SizedBox(height: 40),
+      backgroundColor: AppColors.background,
+      body: SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 28),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.center,
+            children: [
+              const SizedBox(height: 24),
 
-                  AuthTextField(
-                    hint: 'Your Name',
-                    controller: _name,
-                  ),
-                  AuthTextField(
-                    hint: 'Email',
-                    controller: _email,
-                  ),
-                  AuthTextField(
-                    hint: 'Password',
-                    controller: _password,
-                    isPassword: true,
-                  ),
-
-                  const SizedBox(height: 20),
-
-                  /// ✅ FIXED SIGNUP BUTTON
-                  ElevatedButton(
-                    onPressed: () async {
-                      try {
-                        await _auth.signup(
-                          _name.text.trim(),
-                          _email.text.trim(),
-                          _password.text.trim(),
-                        );
-
-                        // ✅ MOVE FORWARD AFTER SIGNUP
-                        Navigator.pushReplacementNamed(
-                          context,
-                          '/onboarding',
-                        );
-                      } catch (e) {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          SnackBar(
-                            content: Text(e.toString()),
-                          ),
-                        );
-                      }
-                    },
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: AppColors.accentGreen,
-                      minimumSize: const Size(double.infinity, 52),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(30),
-                      ),
-                    ),
-                    child: const Text("I'M READY"),
-                  ),
-                ],
+              // 🔰 LOGO
+              const Text(
+                'EcoLife',
+                style: TextStyle(
+                  fontSize: 28,
+                  fontWeight: FontWeight.bold,
+                ),
               ),
-            ),
+
+              const SizedBox(height: 24),
+
+              // 🦥 SLOTH
+              Image.asset(
+                'assets/images/sloth_smile.png',
+                height: 180,
+              ),
+
+              const SizedBox(height: 16),
+
+              const Text(
+                'Create your EcoLife',
+                style: TextStyle(
+                  fontSize: 22,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+
+              const SizedBox(height: 30),
+
+              AuthTextField(
+                hint: 'Your Name',
+                controller: _name,
+              ),
+
+              AuthTextField(
+                hint: 'Email',
+                controller: _email,
+              ),
+
+              AuthTextField(
+                hint: 'Password',
+                controller: _password,
+                isPassword: true,
+              ),
+
+              const SizedBox(height: 24),
+
+              // 🔘 CTA
+              SizedBox(
+                width: double.infinity,
+                height: 54,
+                child: ElevatedButton(
+                  onPressed: () async {
+                    try {
+                      await _auth.signup(
+                        _name.text,
+                        _email.text,
+                        _password.text,
+                      );
+                      Navigator.pushReplacementNamed(
+                        context,
+                        '/onboarding',
+                      );
+                    } catch (e) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(content: Text(e.toString())),
+                      );
+                    }
+                  },
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: AppColors.primary,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(30),
+                    ),
+                  ),
+                  child: const Text(
+                    "I'M READY",
+                    style: TextStyle(fontSize: 16),
+                  ),
+                ),
+              ),
+
+              const Spacer(),
+            ],
           ),
-        ],
+        ),
       ),
     );
   }

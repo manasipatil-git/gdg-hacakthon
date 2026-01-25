@@ -1,6 +1,11 @@
 import 'package:flutter/material.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:provider/provider.dart';
+
 import '../onboarding_controller.dart';
 import '../widgets/onboarding_continue_button.dart';
+import '../../../core/services/firestore_service.dart';
+import '../../../core/providers/user_provider.dart';
 
 class OnboardingNotificationScreen extends StatefulWidget {
   const OnboardingNotificationScreen({super.key});
@@ -48,9 +53,21 @@ class _OnboardingNotificationScreenState
               OnboardingContinueButton(
                 enabled: true,
                 onPressed: () async {
+                  // 1️⃣ Save onboarding data
                   controller.setNotifications(enabled);
                   await controller.finish();
 
+                  // 2️⃣ Get current user UID
+                  final uid = FirebaseAuth.instance.currentUser!.uid;
+
+                  // 3️⃣ Fetch full user from Firestore
+                  final user =
+                      await FirestoreService().fetchUser(uid);
+
+                  // 4️⃣ Store user in Provider (GLOBAL STATE)
+                  context.read<UserProvider>().setUser(user);
+
+                  // 5️⃣ Navigate to dashboard
                   Navigator.pushNamedAndRemoveUntil(
                     context,
                     '/dashboard',

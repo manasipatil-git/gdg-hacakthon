@@ -1,4 +1,5 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
+import '../models/user_model.dart';
 
 class FirestoreService {
   final FirebaseFirestore _db = FirebaseFirestore.instance;
@@ -18,9 +19,9 @@ class FirestoreService {
       'email': email,
       'college': '',
       'hostel': '',
-      'totalPoints': 0,
+      'totalPoints': 0,        // ecoScore
+      'currentStreak': 0,      // streak
       'avgScore': 0,
-      'currentStreak': 0,
       'onboardingCompleted': false,
       'leaderboardOptIn': true,
       'joinedAt': FieldValue.serverTimestamp(),
@@ -44,7 +45,25 @@ class FirestoreService {
     });
   }
 
-  /// Fetch user name for dashboard greeting
+  /// Fetch FULL user for Provider (STEP 4 CORE)
+  Future<UserModel> fetchUser(String uid) async {
+    final doc = await _db.collection('users').doc(uid).get();
+
+    if (!doc.exists || doc.data() == null) {
+      throw Exception('User not found');
+    }
+
+    final data = doc.data()!;
+
+    return UserModel(
+      uid: uid,
+      name: data['name'] ?? '',
+      ecoScore: data['totalPoints'] ?? 0,
+      streak: data['currentStreak'] ?? 0,
+    );
+  }
+
+  /// Fetch user name (used earlier – still valid)
   Future<String> getUserName(String uid) async {
     final doc = await _db.collection('users').doc(uid).get();
 
@@ -78,7 +97,7 @@ class FirestoreService {
       'pointsEarned': 0,
     }, SetOptions(merge: true));
 
-    // 2️⃣ Add trip to trips array
+    // 2️⃣ Add trip
     await dailyLogRef.update({
       'trips': FieldValue.arrayUnion([
         {
@@ -112,7 +131,7 @@ class FirestoreService {
       'pointsEarned': points,
     });
 
-    // 6️⃣ Update user total points
+    // 6️⃣ Update user total points (ecoScore)
     await _db.collection('users').doc(uid).update({
       'totalPoints': FieldValue.increment(points),
     });

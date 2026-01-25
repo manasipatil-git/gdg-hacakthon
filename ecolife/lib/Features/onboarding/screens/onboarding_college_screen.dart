@@ -12,7 +12,9 @@ class OnboardingCollegeScreen extends StatefulWidget {
 }
 
 class _OnboardingCollegeScreenState extends State<OnboardingCollegeScreen> {
-  final controller = OnboardingController();
+  // ✅ Controller is CREATED ONLY HERE (first onboarding screen)
+  final OnboardingController controller = OnboardingController();
+
   String? selected;
 
   final colleges = [
@@ -60,6 +62,8 @@ class _OnboardingCollegeScreenState extends State<OnboardingCollegeScreen> {
                 enabled: selected != null,
                 onPressed: () {
                   controller.setCollege(selected!);
+
+                  // ✅ Pass SAME controller forward
                   Navigator.pushNamed(
                     context,
                     '/onboarding-accommodation',

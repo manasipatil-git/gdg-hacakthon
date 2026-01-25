@@ -7,51 +7,114 @@ class WelcomeScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: Stack(
-        children: [
-          Positioned.fill(
-            child: Image.asset(
-              'assets/images/sloth_bg.png',
-              fit: BoxFit.cover,
-            ),
-          ),
-          SafeArea(
-            child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 28),
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Image.asset('assets/images/logo.png', height: 80),
-                  const SizedBox(height: 40),
-                  _button(
-                    text: 'SIGN IN',
-                    onTap: () => Navigator.pushNamed(context, '/login'),
-                  ),
-                  const SizedBox(height: 16),
-                  _button(
-                    text: 'SIGN UP',
-                    onTap: () => Navigator.pushNamed(context, '/signup'),
-                  ),
-                ],
+      backgroundColor: AppColors.background,
+      body: SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 28),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.center,
+            children: [
+              const SizedBox(height: 24),
+
+              // 🔰 LOGO
+              const Text(
+                'EcoLife',
+                style: TextStyle(
+                  fontSize: 30,
+                  fontWeight: FontWeight.bold,
+                ),
               ),
-            ),
+
+              const SizedBox(height: 30),
+
+              // 🦥 BIG SLOTH
+              Image.asset(
+                'assets/images/sloth_face.png',
+                height: 200, // 👈 bigger
+              ),
+
+              const SizedBox(height: 40),
+
+              // 🔘 LOGIN
+              _primaryButton(
+                text: 'LOGIN WITH EMAIL',
+                onTap: () => Navigator.pushNamed(context, '/login'),
+              ),
+
+              const SizedBox(height: 16),
+
+              // 🔘 SIGN UP
+              _secondaryButton(
+                text: 'SIGN UP',
+                onTap: () => Navigator.pushNamed(context, '/signup'),
+              ),
+
+              const Spacer(),
+
+              // 📄 TERMS
+              const Text(
+                'By continuing you agree to our\nTerms & Privacy Policy',
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  fontSize: 12,
+                  color: Colors.black54,
+                ),
+              ),
+
+              const SizedBox(height: 16),
+            ],
           ),
-        ],
+        ),
       ),
     );
   }
 
-  Widget _button({required String text, required VoidCallback onTap}) {
-    return ElevatedButton(
-      onPressed: onTap,
-      style: ElevatedButton.styleFrom(
-        backgroundColor: AppColors.accentGreen,
-        minimumSize: const Size(double.infinity, 52),
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(30),
+  Widget _primaryButton({
+    required String text,
+    required VoidCallback onTap,
+  }) {
+    return SizedBox(
+      width: double.infinity,
+      height: 54,
+      child: ElevatedButton(
+        onPressed: onTap,
+        style: ElevatedButton.styleFrom(
+          backgroundColor: AppColors.primary,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(30),
+          ),
+        ),
+        child: Text(
+          text,
+          style: const TextStyle(fontSize: 16),
         ),
       ),
-      child: Text(text),
+    );
+  }
+
+  Widget _secondaryButton({
+    required String text,
+    required VoidCallback onTap,
+  }) {
+    return SizedBox(
+      width: double.infinity,
+      height: 54,
+      child: OutlinedButton(
+        onPressed: onTap,
+        style: OutlinedButton.styleFrom(
+          side: BorderSide(color: AppColors.primary),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(30),
+          ),
+        ),
+        child: Text(
+          text,
+          style: TextStyle(
+            color: AppColors.primary,
+            fontSize: 16,
+          ),
+        ),
+      ),
     );
   }
 }
