@@ -1,7 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+
 import '../widgets/auth_text_field.dart';
 import '../auth_controller.dart';
 import '../../../core/constants/colors.dart';
+import '../../../core/providers/user_provider.dart';
 
 class LoginScreen extends StatelessWidget {
   LoginScreen({super.key});
@@ -70,6 +73,10 @@ class LoginScreen extends StatelessWidget {
                     try {
                       final next =
                           await _auth.login(_email.text, _password.text);
+
+                      // 🔑 IMPORTANT: reset session state for this user
+                      context.read<UserProvider>().clear();
+
                       Navigator.pushReplacementNamed(context, next);
                     } catch (e) {
                       ScaffoldMessenger.of(context).showSnackBar(

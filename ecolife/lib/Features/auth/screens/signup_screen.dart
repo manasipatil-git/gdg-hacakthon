@@ -1,7 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+
 import '../widgets/auth_text_field.dart';
 import '../auth_controller.dart';
 import '../../../core/constants/colors.dart';
+import '../../../core/providers/user_provider.dart';
 
 class SignupScreen extends StatelessWidget {
   SignupScreen({super.key});
@@ -79,6 +82,10 @@ class SignupScreen extends StatelessWidget {
                         _email.text,
                         _password.text,
                       );
+
+                      // 🔑 IMPORTANT: reset session state for new user
+                      context.read<UserProvider>().clear();
+
                       Navigator.pushReplacementNamed(
                         context,
                         '/onboarding',
