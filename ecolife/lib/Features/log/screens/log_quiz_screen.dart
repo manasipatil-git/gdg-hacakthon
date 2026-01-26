@@ -6,6 +6,7 @@ import '../widgets/log_option_card.dart';
 import '../widgets/log_summary_card.dart';
 import '../../../core/constants/colors.dart';
 import '../../../core/services/firestore_service.dart';
+import '../controller/log_controller.dart';
 
 class LogScreen extends StatefulWidget {
   const LogScreen({super.key});
@@ -16,10 +17,11 @@ class LogScreen extends StatefulWidget {
 
 class _LogScreenState extends State<LogScreen> {
   int step = 1;
-  int totalScore = 0;
   String? selected;
   bool showSummary = false;
   bool isSubmitting = false;
+
+  final LogController _controller = LogController();
 
   final transportOptions = const {
     'Public Transport': 5,
@@ -38,19 +40,30 @@ class _LogScreenState extends State<LogScreen> {
     'AC': 0,
   };
 
-  /// ✅ FIXED NAVIGATION WITH DEBUGGING
+  final waterOptions = const {
+    'Normal Usage': 2,
+    'Long Shower': 0,
+  };
+
+  // 🆕 Same as Yesterday (demo values)
+  void _useYesterday() {
+    _controller.addAnswer('transport', 'Public Transport', 5);
+    _controller.addAnswer('food', 'Veg', 4);
+    _controller.addAnswer('energy', 'Fan', 3);
+    _controller.addAnswer('water', 'Normal Usage', 2);
+
+    setState(() {
+      showSummary = true;
+    });
+  }
+
   Future<void> _submit() async {
     if (isSubmitting) return;
     setState(() => isSubmitting = true);
 
     final uid = FirebaseAuth.instance.currentUser?.uid;
-    
-    print('🔵 Starting submission...');
-    print('🔵 UID: $uid');
-    print('🔵 Total Score: $totalScore');
 
     if (uid == null) {
-      print('🔴 ERROR: User not logged in');
       if (!mounted) return;
       setState(() => isSubmitting = false);
       ScaffoldMessenger.of(context).showSnackBar(
@@ -62,41 +75,28 @@ class _LogScreenState extends State<LogScreen> {
       return;
     }
 
-    if (totalScore == 0) {
-      print('⚠️ Warning: totalScore is 0');
-    }
-
     try {
-      print('🔵 Calling logEcoAction...');
       await FirestoreService().logEcoAction(
         uid: uid,
-        points: totalScore,
+        points: _controller.score,
         type: 'daily_log',
       );
-      
-      print('✅ logEcoAction completed successfully');
 
       if (!mounted) return;
 
-      print('🔵 Navigating to dashboard...');
       Navigator.of(context).pushNamedAndRemoveUntil(
         '/dashboard',
         (route) => false,
       );
-      print('✅ Navigation called');
-    } catch (e, stackTrace) {
-      print('🔴 ERROR in _submit: $e');
-      print('🔴 Stack trace: $stackTrace');
-      
+    } catch (e) {
       if (!mounted) return;
-      
+
       setState(() => isSubmitting = false);
-      
+
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text('Failed to log action: $e'),
           backgroundColor: Colors.red,
-          duration: const Duration(seconds: 5),
         ),
       );
     }
@@ -120,19 +120,93 @@ class _LogScreenState extends State<LogScreen> {
         ? transportOptions
         : step == 2
             ? foodOptions
-            : energyOptions;
+            : step == 3
+                ? energyOptions
+                : waterOptions;
+
+    final answerKey = step == 1
+        ? 'transport'
+        : step == 2
+            ? 'food'
+            : step == 3
+                ? 'energy'
+                : 'water';
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        LogProgressBar(step: step, total: 3),
+        // 🆕 Live score preview
+        Container(
+          padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
+          margin: const EdgeInsets.only(bottom: 16),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(16),
+            boxShadow: const [
+              BoxShadow(
+                color: Colors.black12,
+                blurRadius: 8,
+                offset: Offset(0, 4),
+              ),
+            ],
+          ),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              const Text(
+                'Live Eco Score',
+                style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
+              ),
+              Text(
+                '+${_controller.score}',
+                style: TextStyle(
+                  fontSize: 20,
+                  fontWeight: FontWeight.bold,
+                  color: AppColors.primary,
+                ),
+              ),
+            ],
+          ),
+        ),
+
+        // 🆕 Same as yesterday button
+        GestureDetector(
+          onTap: _useYesterday,
+          child: Container(
+            width: double.infinity,
+            padding: const EdgeInsets.all(16),
+            margin: const EdgeInsets.only(bottom: 20),
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                colors: [
+                  AppColors.primary.withOpacity(0.9),
+                  AppColors.primary,
+                ],
+              ),
+              borderRadius: BorderRadius.circular(18),
+            ),
+            child: const Text(
+              'Same as yesterday',
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                color: Colors.white,
+                fontSize: 16,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+          ),
+        ),
+
+        LogProgressBar(step: step, total: 4),
         const SizedBox(height: 32),
         Text(
           step == 1
               ? 'How did you travel today?'
               : step == 2
                   ? 'What did you eat today?'
-                  : 'Which appliance did you use most?',
+                  : step == 3
+                      ? 'Which appliance did you use most?'
+                      : 'How was your water usage today?',
           style: const TextStyle(
             fontSize: 26,
             fontWeight: FontWeight.bold,
@@ -144,15 +218,16 @@ class _LogScreenState extends State<LogScreen> {
             text: e.key,
             selected: selected == e.key,
             onTap: () {
+              _controller.addAnswer(answerKey, e.key, e.value);
+
               setState(() {
                 selected = e.key;
-                totalScore += e.value;
               });
 
               Future.delayed(const Duration(milliseconds: 250), () {
                 if (!mounted) return;
 
-                if (step == 3) {
+                if (step == 4) {
                   setState(() => showSummary = true);
                 } else {
                   setState(() {
@@ -180,7 +255,7 @@ class _LogScreenState extends State<LogScreen> {
           ),
         ),
         const SizedBox(height: 24),
-        LogSummaryCard(score: totalScore),
+        LogSummaryCard(score: _controller.score),
         const SizedBox(height: 40),
         SizedBox(
           width: double.infinity,
@@ -200,7 +275,8 @@ class _LogScreenState extends State<LogScreen> {
                     width: 20,
                     child: CircularProgressIndicator(
                       strokeWidth: 2,
-                      valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                      valueColor:
+                          AlwaysStoppedAnimation<Color>(Colors.white),
                     ),
                   )
                 : const Text(
