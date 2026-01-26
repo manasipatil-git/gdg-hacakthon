@@ -28,7 +28,7 @@ The app adapts impact scoring accordingly.
 
 ---
 
-### A live daily EcoScore
+### Interactive, user-first dashboard
 <img src="screens/dashboard.jpeg" width="250"/>
 
 • Daily goal
