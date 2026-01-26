@@ -6,18 +6,19 @@ class LeaderboardService {
   Stream<List<Map<String, dynamic>>> getLeaderboard() {
     return _db
         .collection('users')
-        .orderBy('totalPoints', descending: true)
+        .where('ecoScore', isGreaterThanOrEqualTo: 0)
+        .orderBy('ecoScore', descending: true)
         .limit(50)
         .snapshots()
         .map((snapshot) {
-      return snapshot.docs.map((doc) {
-        final data = doc.data();
-        return {
-          'uid': doc.id,
-          'name': data['name'] ?? 'User',
-          'ecoScore': data['totalPoints'] ?? 0,
-        };
-      }).toList();
-    });
+          return snapshot.docs.map((doc) {
+            final data = doc.data();
+            return {
+              'uid': doc.id,
+              'name': data['name'] ?? 'User',
+              'ecoScore': data['ecoScore'] ?? 0,
+            };
+          }).toList();
+        });
   }
 }

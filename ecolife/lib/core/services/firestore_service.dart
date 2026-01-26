@@ -9,7 +9,6 @@ class FirestoreService {
    USER / AUTH RELATED
   ───────────────────────────── */
 
-  /// Create Firestore user on signup
   Future<void> createUser({
     required String uid,
     required String name,
@@ -20,7 +19,7 @@ class FirestoreService {
       'email': email,
       'college': '',
       'hostel': '',
-      'ecoScore': 0, // ✅ single source of truth
+      'ecoScore': 0, // ✅ SINGLE SOURCE OF TRUTH
       'currentStreak': 0,
       'avgScore': 0,
       'onboardingCompleted': false,
@@ -29,13 +28,11 @@ class FirestoreService {
     });
   }
 
-  /// Check if onboarding is completed
   Future<bool> isOnboardingCompleted(String uid) async {
     final doc = await _db.collection('users').doc(uid).get();
     return doc.data()?['onboardingCompleted'] ?? false;
   }
 
-  /// Save onboarding data
   Future<void> completeOnboarding(
     String uid,
     Map<String, dynamic> data,
@@ -46,7 +43,6 @@ class FirestoreService {
     });
   }
 
-  /// Fetch FULL user for Provider
   Future<UserModel> fetchUser(String uid) async {
     final doc = await _db.collection('users').doc(uid).get();
 
@@ -59,12 +55,11 @@ class FirestoreService {
     return UserModel(
       uid: uid,
       name: data['name'] ?? '',
-      ecoScore: data['ecoScore'] ?? 0, // ✅ FIXED
+      ecoScore: data['ecoScore'] ?? 0,
       streak: data['currentStreak'] ?? 0,
     );
   }
 
-  /// Fetch user name
   Future<String> getUserName(String uid) async {
     final doc = await _db.collection('users').doc(uid).get();
     return doc.data()?['name'] ?? '';
@@ -74,7 +69,6 @@ class FirestoreService {
    ECO LIFE CORE LOGIC
   ───────────────────────────── */
 
-  /// Add a test trip (DEMO / HACKATHON HAPPY PATH)
   Future<void> addTestTrip(String uid) async {
     try {
       debugPrint("🚀 addTestTrip START for uid: $uid");
@@ -87,7 +81,7 @@ class FirestoreService {
           .collection('logs')
           .doc(today);
 
-      // 1️⃣ Ensure daily log exists
+      // 1️⃣ Ensure daily log
       await dailyLogRef.set({
         'date': today,
         'createdAt': FieldValue.serverTimestamp(),
@@ -96,20 +90,20 @@ class FirestoreService {
         'pointsEarned': 0,
       }, SetOptions(merge: true));
 
-      // 2️⃣ Add trip (DEMO-FRIENDLY)
+      // 2️⃣ Add eco-friendly trip
       await dailyLogRef.update({
         'trips': FieldValue.arrayUnion([
           {
             'mode': 'bus',
             'distanceKm': 5,
-            'emissions': 1, // ✅ low emissions
+            'emissions': 1,
             'timestamp': Timestamp.now(),
           }
         ]),
-        'totalDayEmissions': FieldValue.increment(1), // ✅ FIXED
+        'totalDayEmissions': FieldValue.increment(1),
       });
 
-      // 3️⃣ Recalculate emissions & score
+      // 3️⃣ Calculate score
       final snapshot = await dailyLogRef.get();
       final totalEmissions = snapshot.data()?['totalDayEmissions'] ?? 0;
 
@@ -123,13 +117,13 @@ class FirestoreService {
         points = 5;
       }
 
-      // 4️⃣ Update daily score
+      // 4️⃣ Update daily log
       await dailyLogRef.update({
         'dailyScore': dailyScore,
         'pointsEarned': points,
       });
 
-      // 5️⃣ Update USER ecoScore (SAFE)
+      // 5️⃣ UPDATE USER ecoScore (THIS IS THE KEY)
       await _db.collection('users').doc(uid).set({
         'ecoScore': FieldValue.increment(points),
       }, SetOptions(merge: true));
