@@ -3,6 +3,10 @@
 A gamified carbon footprint tracker for students.
 Built to turn everyday eco actions into habits through streaks, challenges, and rewards.
 
+![Flutter](https://img.shields.io/badge/Flutter-Framework-blue)
+![Firebase](https://img.shields.io/badge/Firebase-Backend-orange)
+![Provider](https://img.shields.io/badge/State%20Management-Provider-green)
+
 ---
 
 ## What problem does EcoLife solve?
