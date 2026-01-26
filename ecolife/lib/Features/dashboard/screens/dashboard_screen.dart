@@ -13,10 +13,9 @@ import '../widgets/impact_card.dart';
 import '../widgets/quick_actions.dart';
 import '../widgets/leaderboard_preview.dart';
 
-// Challenges widget (ONLY ONE SOURCE OF TRUTH)
+// Challenges widget
 import '../../challenges/widgets/active_challenge_card.dart';
 import '../widgets/streak_calendar_card.dart';
-
 
 class DashboardScreen extends StatefulWidget {
   const DashboardScreen({super.key});
@@ -52,7 +51,6 @@ class _DashboardScreenState extends State<DashboardScreen> {
   Widget build(BuildContext context) {
     final userProvider = context.watch<UserProvider>();
     final user = userProvider.user;
-    final demoActionUsed = userProvider.demoActionLoggedThisSession;
 
     return Scaffold(
       backgroundColor: AppColors.background,
@@ -70,7 +68,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
 
               const SizedBox(height: 16),
 
-              // 🌱 Eco Score Card (FULL WIDTH)
+              // 🌱 Eco Score Card
               if (isLoadingUser || user == null)
                 const EcoScoreCard(
                   score: 0,
@@ -85,56 +83,28 @@ class _DashboardScreenState extends State<DashboardScreen> {
 
               const SizedBox(height: 16),
 
+              const StreakCalendarCard(),
+
               const SizedBox(height: 16),
-             const StreakCalendarCard(),
 
-
-              // 🚍 DEMO ECO ACTION (SESSION SAFE)
+              // ➕ Log Action CTA (replaces demo button)
               SizedBox(
                 width: double.infinity,
                 height: 50,
-                child: ElevatedButton(
+                child: ElevatedButton.icon(
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: demoActionUsed
-                        ? Colors.grey.shade400
-                        : AppColors.primary,
+                    backgroundColor: AppColors.primary,
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(14),
                     ),
                   ),
-                  onPressed: (user == null || demoActionUsed)
-                      ? null
-                      : () async {
-                          final uid =
-                              FirebaseAuth.instance.currentUser!.uid;
-
-                          // 1️⃣ Log demo trip
-                          await FirestoreService().addTestTrip(uid);
-
-                          // 2️⃣ Fetch updated user
-                          final updatedUser =
-                              await FirestoreService().fetchUser(uid);
-
-                          if (!mounted) return;
-
-                          // 3️⃣ Update provider state
-                          context.read<UserProvider>().setUser(updatedUser);
-                          context
-                              .read<UserProvider>()
-                              .markDemoActionLogged();
-
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(
-                              content:
-                                  Text('🌱 Eco action logged for today'),
-                            ),
-                          );
-                        },
-                  child: Text(
-                    demoActionUsed
-                        ? '✅ Action logged for today'
-                        : '🚍 Used Public Transport Today (Demo)',
-                    style: const TextStyle(fontSize: 15),
+                  onPressed: () {
+                    Navigator.pushNamed(context, '/log');
+                  },
+                  icon: const Icon(Icons.add),
+                  label: const Text(
+                    'Log an Eco Action',
+                    style: TextStyle(fontSize: 15),
                   ),
                 ),
               ),

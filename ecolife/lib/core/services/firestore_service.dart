@@ -1,5 +1,4 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:flutter/material.dart';
 import '../models/user_model.dart';
 
 class FirestoreService {
@@ -19,7 +18,7 @@ class FirestoreService {
       'email': email,
       'college': '',
       'hostel': '',
-      'ecoScore': 0, // ✅ SINGLE SOURCE OF TRUTH
+      'ecoScore': 0, // ✅ single source of truth
       'currentStreak': 0,
       'avgScore': 0,
       'onboardingCompleted': false,
@@ -70,68 +69,13 @@ class FirestoreService {
    ECO LIFE CORE LOGIC
   ───────────────────────────── */
 
-  Future<void> addTestTrip(String uid) async {
-    try {
-      debugPrint("🚀 addTestTrip START for uid: $uid");
-
-      final today = DateTime.now().toIso8601String().split('T')[0];
-
-      final dailyLogRef = _db
-          .collection('dailyLogs')
-          .doc(uid)
-          .collection('logs')
-          .doc(today);
-
-      // 1️⃣ Ensure daily log
-      await dailyLogRef.set({
-        'date': today,
-        'createdAt': FieldValue.serverTimestamp(),
-        'totalDayEmissions': 0,
-        'dailyScore': 0,
-        'pointsEarned': 0,
-      }, SetOptions(merge: true));
-
-      // 2️⃣ Add eco-friendly trip
-      await dailyLogRef.update({
-        'trips': FieldValue.arrayUnion([
-          {
-            'mode': 'bus',
-            'distanceKm': 5,
-            'emissions': 1,
-            'timestamp': Timestamp.now(),
-          }
-        ]),
-        'totalDayEmissions': FieldValue.increment(1),
-      });
-
-      // 3️⃣ Calculate score
-      final snapshot = await dailyLogRef.get();
-      final totalEmissions = snapshot.data()?['totalDayEmissions'] ?? 0;
-
-      final num dailyScore =
-          (100 - (totalEmissions * 10)).clamp(0, 100);
-
-      int points = 0;
-      if (dailyScore >= 85) {
-        points = 10;
-      } else if (dailyScore >= 70) {
-        points = 5;
-      }
-
-      // 4️⃣ Update daily log
-      await dailyLogRef.update({
-        'dailyScore': dailyScore,
-        'pointsEarned': points,
-      });
-
-      // 5️⃣ UPDATE USER ecoScore (THIS IS THE KEY)
-      await _db.collection('users').doc(uid).set({
-        'ecoScore': FieldValue.increment(points),
-      }, SetOptions(merge: true));
-
-      debugPrint("🔥 ecoScore incremented by $points");
-    } catch (e) {
-      debugPrint("❌ addTestTrip FAILED: $e");
-    }
+  /// REAL eco action logger (called from Log screen)
+  Future<void> logEcoAction({
+    required String uid,
+    required int points,
+  }) async {
+    await _db.collection('users').doc(uid).set({
+      'ecoScore': FieldValue.increment(points),
+    }, SetOptions(merge: true));
   }
 }

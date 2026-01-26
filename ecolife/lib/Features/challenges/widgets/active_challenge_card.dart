@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+
 import '../../../core/constants/colors.dart';
-import '../data/challenge_definitions.dart';
 
 class ActiveChallengeCard extends StatelessWidget {
   const ActiveChallengeCard({super.key});
@@ -11,28 +11,37 @@ class ActiveChallengeCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final uid = FirebaseAuth.instance.currentUser!.uid;
 
-    return StreamBuilder<QuerySnapshot>(
+    return StreamBuilder<DocumentSnapshot>(
       stream: FirebaseFirestore.instance
           .collection('users')
           .doc(uid)
-          .collection('challenges')
-          .where('status', isEqualTo: 'active')
           .snapshots(),
       builder: (context, snapshot) {
-        if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
+        if (!snapshot.hasData || !snapshot.data!.exists) {
+          return const SizedBox();
+        }
+
+        final data = snapshot.data!.data() as Map<String, dynamic>;
+
+        if (!data.containsKey('activeChallenge')) {
           return const SizedBox(); // no active challenge
         }
 
-        final doc = snapshot.data!.docs.first;
-        final challengeId = doc.id;
-        final progress = doc['progress'];
+        final activeChallenge =
+            data['activeChallenge'] as Map<String, dynamic>;
 
-        // 🔥 get challenge definition from app
-        final challenge = challengeDefinitions
-            .firstWhere((c) => c.id == challengeId);
+        final progress = activeChallenge['progress'] ?? 0;
+        final reward = activeChallenge['reward'] ?? 0;
+        final title = activeChallenge['title'] ?? '';
+        final description = activeChallenge['description'] ?? '';
+        final difficulty = activeChallenge['difficulty'] ?? '';
+
+        // Optional: if you later add totalDays
+        final int totalDays =
+            activeChallenge['totalDays'] ?? 7; // fallback
 
         final progressPercent =
-            progress / challenge.daysRequired;
+            totalDays > 0 ? progress / totalDays : 0.0;
 
         return Container(
           padding: const EdgeInsets.all(16),
@@ -44,21 +53,29 @@ class ActiveChallengeCard extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
-                challenge.title,
+                title,
                 style: const TextStyle(
                   fontSize: 18,
                   fontWeight: FontWeight.w600,
                 ),
               ),
               const SizedBox(height: 4),
-              Text(challenge.description),
+              Text(description),
+              const SizedBox(height: 6),
+              Text(
+                difficulty,
+                style: TextStyle(
+                  color: AppColors.muted,
+                  fontSize: 12,
+                ),
+              ),
               const SizedBox(height: 12),
 
               // Progress bar
               ClipRRect(
                 borderRadius: BorderRadius.circular(8),
                 child: LinearProgressIndicator(
-                  value: progressPercent,
+                  value: progressPercent.clamp(0.0, 1.0),
                   minHeight: 8,
                   backgroundColor: AppColors.background,
                   valueColor:
@@ -71,11 +88,9 @@ class ActiveChallengeCard extends StatelessWidget {
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
+                  Text('$progress / $totalDays days'),
                   Text(
-                    '$progress / ${challenge.daysRequired} days',
-                  ),
-                  Text(
-                    '${challenge.reward} pts',
+                    '$reward pts',
                     style: TextStyle(
                       color: AppColors.primary,
                       fontWeight: FontWeight.w600,
