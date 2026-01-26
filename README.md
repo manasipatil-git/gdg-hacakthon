@@ -89,12 +89,20 @@ One action → one source of truth → instant feedback
 
 ## Tech stack
 
-• Flutter  
-• Firebase Authentication  
-• Firestore  
-• Provider state management  
+- **Flutter**  
+  Cross-platform framework used to build the EcoLife mobile app from a single codebase.
 
-Built mobile-first with a clean demo-friendly flow.
+- **Firebase Authentication**  
+  Email and password based user login and identity management.
+
+- **Cloud Firestore**
+  NoSQL database used for storing user profiles, daily eco logs, EcoScore, and leaderboard data.
+
+- **Firebase SDKs for Flutter**  
+  Used to integrate Firebase services seamlessly within the Flutter application.
+
+
+Built mobile-first with a clean, demo-friendly flow.
 
 ---
 
