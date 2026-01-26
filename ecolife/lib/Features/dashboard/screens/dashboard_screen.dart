@@ -24,7 +24,6 @@ class DashboardScreen extends StatefulWidget {
 }
 
 class _DashboardScreenState extends State<DashboardScreen> {
-  bool demoActionUsed = false;
   bool isLoadingUser = true;
 
   @override
@@ -47,7 +46,9 @@ class _DashboardScreenState extends State<DashboardScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final user = context.watch<UserProvider>().user;
+    final userProvider = context.watch<UserProvider>();
+    final user = userProvider.user;
+    final demoActionUsed = userProvider.demoActionLoggedThisSession;
 
     return Scaffold(
       backgroundColor: AppColors.background,
@@ -78,6 +79,11 @@ class _DashboardScreenState extends State<DashboardScreen> {
                   streakDays: user.streak,
                 ),
 
+
+              // ─────────────────────────────
+              // 🚧 DEMO ECO ACTION (SESSION SAFE)
+              // ─────────────────────────────
+
               const SizedBox(height: 16),
 
               // 🚍 Demo Eco Action
@@ -86,7 +92,9 @@ class _DashboardScreenState extends State<DashboardScreen> {
                 height: 50,
                 child: ElevatedButton(
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: AppColors.primary,
+                    backgroundColor: demoActionUsed
+                        ? Colors.grey.shade400
+                        : AppColors.primary,
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(14),
                     ),
@@ -101,18 +109,23 @@ class _DashboardScreenState extends State<DashboardScreen> {
                           final updatedUser =
                               await FirestoreService().fetchUser(uid);
 
-                          if (!mounted) return;
+                          if (mounted) {
+                            // 3️⃣ Update Provider (user + session flag)
+                            context
+                                .read<UserProvider>()
+                                .setUser(updatedUser);
 
-                          context
-                              .read<UserProvider>()
-                              .setUser(updatedUser);
-
-                          setState(() => demoActionUsed = true);
+                            context
+                                .read<UserProvider>()
+                                .markDemoActionLogged();
+                          }
 
                           ScaffoldMessenger.of(context).showSnackBar(
                             const SnackBar(
-                              content:
-                                  Text('🌱 Eco action logged! Score updated'),
+                              content: Text(
+                                '🌱 Eco action logged for today',
+                              ),
+
                             ),
                           );
                         },

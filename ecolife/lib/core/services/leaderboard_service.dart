@@ -1,19 +1,21 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 
 class LeaderboardService {
-  final _db = FirebaseFirestore.instance;
+  final FirebaseFirestore _db = FirebaseFirestore.instance;
 
   Stream<List<Map<String, dynamic>>> getLeaderboard() {
     return _db
         .collection('users')
-        .orderBy('ecoScore', descending: true)
+        .orderBy('totalPoints', descending: true)
         .limit(50)
         .snapshots()
         .map((snapshot) {
       return snapshot.docs.map((doc) {
+        final data = doc.data();
         return {
           'uid': doc.id,
-          ...doc.data(),
+          'name': data['name'] ?? 'User',
+          'ecoScore': data['totalPoints'] ?? 0,
         };
       }).toList();
     });

@@ -6,13 +6,23 @@ class UserProvider extends ChangeNotifier {
 
   UserModel? get user => _user;
 
+  // 🔒 DEMO SESSION FLAG
+  // Ensures eco action can be logged only once per app session
+  bool demoActionLoggedThisSession = false;
+
   /// Set user after login / onboarding
   void setUser(UserModel user) {
     _user = user;
     notifyListeners();
   }
 
-  /// Update eco score locally
+  /// Mark demo eco action as logged (SESSION ONLY)
+  void markDemoActionLogged() {
+    demoActionLoggedThisSession = true;
+    notifyListeners();
+  }
+
+  /// Update eco score locally (still useful)
   void updateEcoScore(int delta) {
     if (_user == null) return;
 
@@ -26,9 +36,10 @@ class UserProvider extends ChangeNotifier {
     notifyListeners();
   }
 
-  /// Clear on logout (optional)
+  /// Clear everything on logout
   void clear() {
     _user = null;
+    demoActionLoggedThisSession = false;
     notifyListeners();
   }
 }
