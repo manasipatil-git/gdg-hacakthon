@@ -20,13 +20,36 @@ class FirestoreService {
       'email': email,
       'ecoScore': 0,
       'currentStreak': 0,
-      'lastLogDate': null, // ⭐ IMPORTANT
+      'lastLogDate': null,
       'onboardingCompleted': false,
       'leaderboardOptIn': true,
       'joinedAt': FieldValue.serverTimestamp(),
     });
   }
 
+  /// ✅ Complete onboarding (NO side effects)
+  Future<void> completeOnboarding(
+    String uid,
+    Map<String, dynamic> onboardingData,
+  ) async {
+    await _db.collection('users').doc(uid).update({
+      ...onboardingData,
+      'onboardingCompleted': true,
+    });
+  }
+
+  /// ✅ CHECK onboarding status (THIS FIXES YOUR ERROR)
+  Future<bool> isOnboardingCompleted(String uid) async {
+    final doc = await _db.collection('users').doc(uid).get();
+
+    if (!doc.exists || doc.data() == null) {
+      return false;
+    }
+
+    return doc.data()!['onboardingCompleted'] == true;
+  }
+
+  /// ONE-TIME FETCH (used only where needed)
   Future<UserModel> fetchUser(String uid) async {
     final doc = await _db.collection('users').doc(uid).get();
 
@@ -42,6 +65,23 @@ class FirestoreService {
       ecoScore: data['ecoScore'] ?? 0,
       streak: data['currentStreak'] ?? 0,
     );
+  }
+
+  /// 🔥 LIVE USER STREAM (streak + ecoScore live updates)
+  Stream<UserModel> userStream(String uid) {
+    return _db.collection('users').doc(uid).snapshots().map((doc) {
+      final data = doc.data();
+      if (data == null) {
+        throw Exception('User not found');
+      }
+
+      return UserModel(
+        uid: uid,
+        name: data['name'] ?? '',
+        ecoScore: data['ecoScore'] ?? 0,
+        streak: data['currentStreak'] ?? 0,
+      );
+    });
   }
 
   /* ─────────────────────────────
@@ -63,8 +103,8 @@ class FirestoreService {
 
     final today = DateTime.now();
     final todayKey = DateFormat('yyyy-MM-dd').format(today);
-    final yesterdayKey = DateFormat('yyyy-MM-dd')
-        .format(today.subtract(const Duration(days: 1)));
+    final yesterdayKey =
+        DateFormat('yyyy-MM-dd').format(today.subtract(const Duration(days: 1)));
 
     final String? lastLogDate = data['lastLogDate'];
     int currentStreak = data['currentStreak'] ?? 0;
@@ -72,17 +112,14 @@ class FirestoreService {
     int updatedStreak;
 
     if (lastLogDate == todayKey) {
-      // 🚫 already logged today
       updatedStreak = currentStreak;
     } else if (lastLogDate == yesterdayKey) {
-      // 🔥 streak continues
       updatedStreak = currentStreak + 1;
     } else {
-      // 💀 streak broken OR first log
       updatedStreak = 1;
     }
 
-    // 1️⃣ Save log entry
+    // Save log entry
     await logRef.set({
       'type': type,
       'points': points,
@@ -90,7 +127,7 @@ class FirestoreService {
       'createdAt': FieldValue.serverTimestamp(),
     });
 
-    // 2️⃣ Update user document
+    // Update user document
     await userRef.update({
       'ecoScore': FieldValue.increment(points),
       'currentStreak': updatedStreak,

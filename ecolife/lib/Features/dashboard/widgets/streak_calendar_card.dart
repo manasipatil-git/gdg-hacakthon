@@ -17,18 +17,30 @@ class StreakCalendarCard extends StatelessWidget {
       stream: FirebaseFirestore.instance
           .collection('users')
           .doc(uid)
-          .collection('daily_logs')
+          .collection('logs') // ✅ correct collection
           .snapshots(),
       builder: (context, snapshot) {
-        if (!snapshot.hasData) {
+        // ⏳ Loading
+        if (snapshot.connectionState == ConnectionState.waiting) {
           return const SizedBox(
             height: 120,
             child: Center(child: CircularProgressIndicator()),
           );
         }
 
+        // ❌ Error or no data
+        if (!snapshot.hasData || snapshot.data == null) {
+          return const SizedBox(
+            height: 120,
+            child: Center(child: Text('No streak data yet')),
+          );
+        }
+
+        // Extract logged dates safely
         final loggedDates = snapshot.data!.docs
-            .map((d) => d.id)
+            .map((d) => d.data() as Map<String, dynamic>)
+            .where((data) => data.containsKey('date'))
+            .map((data) => data['date'] as String)
             .toSet(); // yyyy-MM-dd
 
         return Container(
@@ -52,23 +64,24 @@ class StreakCalendarCard extends StatelessWidget {
                       fontWeight: FontWeight.bold,
                     ),
                   ),
-                  Icon(Icons.local_fire_department,
-                      color: Colors.orange),
+                  Icon(
+                    Icons.local_fire_department,
+                    color: Colors.orange,
+                  ),
                 ],
               ),
 
               const SizedBox(height: 12),
 
-              // 📅 Week Row
+              // 📅 Last 7 days
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: List.generate(7, (index) {
                   final date = today.subtract(Duration(days: 6 - index));
                   final key = DateFormat('yyyy-MM-dd').format(date);
                   final isDone = loggedDates.contains(key);
-                  final isToday = DateFormat('yyyy-MM-dd')
-                          .format(today) ==
-                      key;
+                  final isToday =
+                      DateFormat('yyyy-MM-dd').format(today) == key;
 
                   return Column(
                     children: [

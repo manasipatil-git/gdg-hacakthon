@@ -1,9 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 
 import '../../../core/constants/colors.dart';
-import '../../../core/providers/user_provider.dart';
 import '../../../core/services/firestore_service.dart';
 
 // Dashboard widgets
@@ -17,131 +15,126 @@ import '../widgets/leaderboard_preview.dart';
 import '../../challenges/widgets/active_challenge_card.dart';
 import '../widgets/streak_calendar_card.dart';
 
-class DashboardScreen extends StatefulWidget {
+class DashboardScreen extends StatelessWidget {
   const DashboardScreen({super.key});
 
   @override
-  State<DashboardScreen> createState() => _DashboardScreenState();
-}
-
-class _DashboardScreenState extends State<DashboardScreen> {
-  bool isLoadingUser = true;
-
-  @override
-  void initState() {
-    super.initState();
-    _loadUser();
-  }
-
-  Future<void> _loadUser() async {
-    final uid = FirebaseAuth.instance.currentUser?.uid;
-    if (uid == null) return;
-
-    final fetchedUser = await FirestoreService().fetchUser(uid);
-
-    if (!mounted) return;
-
-    context.read<UserProvider>().setUser(fetchedUser);
-    setState(() {
-      isLoadingUser = false;
-    });
-  }
-
-  @override
   Widget build(BuildContext context) {
-    final userProvider = context.watch<UserProvider>();
-    final user = userProvider.user;
+    final uid = FirebaseAuth.instance.currentUser?.uid;
 
-    return Scaffold(
-      backgroundColor: AppColors.background,
-      bottomNavigationBar: const DashboardBottomNav(),
-      body: SafeArea(
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.all(16),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              // 👋 Greeting
-              GreetingHeader(
-                name: user?.name.isNotEmpty == true ? user!.name : 'there',
-              ),
+    if (uid == null) {
+      return const Scaffold(
+        body: Center(child: CircularProgressIndicator()),
+      );
+    }
 
-              const SizedBox(height: 16),
+    return StreamBuilder(
+      stream: FirestoreService().userStream(uid),
+      builder: (context, snapshot) {
+        // ⏳ Loading
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return const Scaffold(
+            backgroundColor: AppColors.background,
+            body: Center(child: CircularProgressIndicator()),
+          );
+        }
 
-              // 🌱 Eco Score Card
-              if (isLoadingUser || user == null)
-                const EcoScoreCard(
-                  score: 0,
-                  streakDays: 0,
-                  isLoading: true,
-                )
-              else
-                EcoScoreCard(
-                  score: user.ecoScore,
-                  streakDays: user.streak,
-                ),
+        // ❌ Error
+        if (snapshot.hasError || !snapshot.hasData) {
+          return const Scaffold(
+            backgroundColor: AppColors.background,
+            body: Center(child: Text('Failed to load user data')),
+          );
+        }
 
-              const SizedBox(height: 16),
+        final user = snapshot.data!;
 
-              const StreakCalendarCard(),
+        return Scaffold(
+          backgroundColor: AppColors.background,
+          bottomNavigationBar: const DashboardBottomNav(),
+          body: SafeArea(
+            child: SingleChildScrollView(
+              padding: const EdgeInsets.all(16),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // 👋 Greeting
+                  GreetingHeader(
+                    name: user.name.isNotEmpty ? user.name : 'there',
+                  ),
 
-              const SizedBox(height: 16),
+                  const SizedBox(height: 16),
 
-              // ➕ Log Action CTA (replaces demo button)
-              SizedBox(
-                width: double.infinity,
-                height: 50,
-                child: ElevatedButton.icon(
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: AppColors.primary,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(14),
+                  // 🌱 Eco Score Card (LIVE)
+                  EcoScoreCard(
+                    score: user.ecoScore,
+                    streakDays: user.streak,
+                  ),
+
+                  const SizedBox(height: 16),
+
+                  // 🔥 Streak Calendar (reads from logs)
+                  const StreakCalendarCard(),
+
+                  const SizedBox(height: 16),
+
+                  // ➕ Log Action CTA
+                  SizedBox(
+                    width: double.infinity,
+                    height: 50,
+                    child: ElevatedButton.icon(
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: AppColors.primary,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(14),
+                        ),
+                      ),
+                      onPressed: () {
+                        Navigator.pushNamed(context, '/log');
+                      },
+                      icon: const Icon(Icons.add),
+                      label: const Text(
+                        'Log an Eco Action',
+                        style: TextStyle(fontSize: 15),
+                      ),
                     ),
                   ),
-                  onPressed: () {
-                    Navigator.pushNamed(context, '/log');
-                  },
-                  icon: const Icon(Icons.add),
-                  label: const Text(
-                    'Log an Eco Action',
-                    style: TextStyle(fontSize: 15),
+
+                  const SizedBox(height: 12),
+
+                  // ⚡ Impact
+                  const ImpactCard(),
+
+                  const SizedBox(height: 16),
+
+                  // ⚡ Quick Actions
+                  const QuickActions(),
+
+                  const SizedBox(height: 24),
+
+                  // 🎯 Active Challenge
+                  const Text(
+                    'Active Challenge',
+                    style: TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                    ),
                   ),
-                ),
+                  const SizedBox(height: 12),
+                  const ActiveChallengeCard(),
+
+                  const SizedBox(height: 24),
+
+                  // 🏆 Leaderboard
+                  const LeaderboardPreview(),
+
+                  const SizedBox(height: 32),
+                ],
               ),
-
-              const SizedBox(height: 12),
-
-              // ⚡ Impact
-              const ImpactCard(),
-
-              const SizedBox(height: 16),
-
-              // ⚡ Quick Actions
-              const QuickActions(),
-
-              const SizedBox(height: 24),
-
-              // 🎯 Active Challenge
-              const Text(
-                'Active Challenge',
-                style: TextStyle(
-                  fontSize: 18,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-              const SizedBox(height: 12),
-              const ActiveChallengeCard(),
-
-              const SizedBox(height: 24),
-
-              // 🏆 Leaderboard
-              const LeaderboardPreview(),
-
-              const SizedBox(height: 32),
-            ],
+            ),
           ),
-        ),
-      ),
+        );
+      },
     );
   }
 }

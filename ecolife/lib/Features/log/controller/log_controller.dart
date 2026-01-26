@@ -16,7 +16,7 @@ class LogController {
   Future<void> submit() async {
     final today = DateTime.now().toIso8601String().split('T').first;
 
-    await _db.collection('daily_logs').doc('$_uid\_$today').set({
+    await _db.collection('daily_logs').doc('${_uid}_$today').set({
       'uid': _uid,
       'date': today,
       ...answers,

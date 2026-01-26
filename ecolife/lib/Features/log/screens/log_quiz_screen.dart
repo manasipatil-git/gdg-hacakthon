@@ -1,12 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:provider/provider.dart';
 
 import '../widgets/log_progress_bar.dart';
 import '../widgets/log_option_card.dart';
 import '../widgets/log_summary_card.dart';
 import '../../../core/constants/colors.dart';
-import '../../../core/providers/user_provider.dart';
 import '../../../core/services/firestore_service.dart';
 
 class LogScreen extends StatefulWidget {
@@ -21,10 +19,7 @@ class _LogScreenState extends State<LogScreen> {
   int totalScore = 0;
   String? selected;
   bool showSummary = false;
-
-  String? transport;
-  String? food;
-  String? energy;
+  bool isSubmitting = false;
 
   final transportOptions = const {
     'Public Transport': 5,
@@ -43,26 +38,68 @@ class _LogScreenState extends State<LogScreen> {
     'AC': 0,
   };
 
-  /// 🔥 THIS IS THE ONLY PLACE ecoScore IS UPDATED
-  Future<void> _submit(BuildContext context) async {
-    final uid = FirebaseAuth.instance.currentUser!.uid;
+  /// ✅ FIXED NAVIGATION WITH DEBUGGING
+  Future<void> _submit() async {
+    if (isSubmitting) return;
+    setState(() => isSubmitting = true);
 
-    // 1️⃣ WRITE eco action to Firestore
-    await FirestoreService().logEcoAction(
-      uid: uid,
-      points: totalScore,
-    );
+    final uid = FirebaseAuth.instance.currentUser?.uid;
+    
+    print('🔵 Starting submission...');
+    print('🔵 UID: $uid');
+    print('🔵 Total Score: $totalScore');
 
-    // 2️⃣ Fetch updated user
-    final updatedUser = await FirestoreService().fetchUser(uid);
+    if (uid == null) {
+      print('🔴 ERROR: User not logged in');
+      if (!mounted) return;
+      setState(() => isSubmitting = false);
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('User not logged in. Please sign in again.'),
+          backgroundColor: Colors.red,
+        ),
+      );
+      return;
+    }
 
-    if (!mounted) return;
+    if (totalScore == 0) {
+      print('⚠️ Warning: totalScore is 0');
+    }
 
-    // 3️⃣ Update Provider (Dashboard + Leaderboard update automatically)
-    context.read<UserProvider>().setUser(updatedUser);
+    try {
+      print('🔵 Calling logEcoAction...');
+      await FirestoreService().logEcoAction(
+        uid: uid,
+        points: totalScore,
+        type: 'daily_log',
+      );
+      
+      print('✅ logEcoAction completed successfully');
 
-    // 4️⃣ Go back to Dashboard
-    Navigator.pushReplacementNamed(context, '/dashboard');
+      if (!mounted) return;
+
+      print('🔵 Navigating to dashboard...');
+      Navigator.of(context).pushNamedAndRemoveUntil(
+        '/dashboard',
+        (route) => false,
+      );
+      print('✅ Navigation called');
+    } catch (e, stackTrace) {
+      print('🔴 ERROR in _submit: $e');
+      print('🔴 Stack trace: $stackTrace');
+      
+      if (!mounted) return;
+      
+      setState(() => isSubmitting = false);
+      
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Failed to log action: $e'),
+          backgroundColor: Colors.red,
+          duration: const Duration(seconds: 5),
+        ),
+      );
+    }
   }
 
   @override
@@ -72,7 +109,7 @@ class _LogScreenState extends State<LogScreen> {
       body: SafeArea(
         child: Padding(
           padding: const EdgeInsets.all(20),
-          child: showSummary ? _summaryView(context) : _logView(),
+          child: showSummary ? _summaryView() : _logView(),
         ),
       ),
     );
@@ -110,10 +147,6 @@ class _LogScreenState extends State<LogScreen> {
               setState(() {
                 selected = e.key;
                 totalScore += e.value;
-
-                if (step == 1) transport = e.key;
-                if (step == 2) food = e.key;
-                if (step == 3) energy = e.key;
               });
 
               Future.delayed(const Duration(milliseconds: 250), () {
@@ -135,12 +168,12 @@ class _LogScreenState extends State<LogScreen> {
     );
   }
 
-  Widget _summaryView(BuildContext context) {
+  Widget _summaryView() {
     return Column(
       mainAxisAlignment: MainAxisAlignment.center,
       children: [
         const Text(
-          'Today’s Impact 🌱',
+          'Today\'s Impact 🌱',
           style: TextStyle(
             fontSize: 28,
             fontWeight: FontWeight.bold,
@@ -153,17 +186,27 @@ class _LogScreenState extends State<LogScreen> {
           width: double.infinity,
           height: 54,
           child: ElevatedButton(
-            onPressed: () => _submit(context),
+            onPressed: isSubmitting ? null : _submit,
             style: ElevatedButton.styleFrom(
               backgroundColor: AppColors.primary,
+              disabledBackgroundColor: AppColors.primary.withOpacity(0.6),
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(30),
               ),
             ),
-            child: const Text(
-              'Finish',
-              style: TextStyle(fontSize: 18),
-            ),
+            child: isSubmitting
+                ? const SizedBox(
+                    height: 20,
+                    width: 20,
+                    child: CircularProgressIndicator(
+                      strokeWidth: 2,
+                      valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                    ),
+                  )
+                : const Text(
+                    'Finish',
+                    style: TextStyle(fontSize: 18),
+                  ),
           ),
         ),
       ],
