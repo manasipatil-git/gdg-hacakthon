@@ -1,6 +1,7 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import '../models/user_model.dart';
+import 'package:intl/intl.dart';
 
 class FirestoreService {
   final FirebaseFirestore _db = FirebaseFirestore.instance;
@@ -45,7 +46,52 @@ class FirestoreService {
       'onboardingCompleted': true,
     });
   }
-  
+  /// Get Streak 
+  Future<void> logEcoAction({
+  required String uid,
+  required int points,
+  required String type,
+}) async {
+  final userRef = _db.collection('users').doc(uid);
+  final logRef = userRef.collection('logs').doc();
+
+  final userSnap = await userRef.get();
+  final data = userSnap.data()!;
+
+  final today = DateTime.now();
+  final todayKey = DateFormat('yyyy-MM-dd').format(today);
+
+  final lastLogDate = data['lastLogDate'] as String?;
+  int newStreak = data['streak'] ?? 0;
+
+  if (lastLogDate == todayKey) {
+  // already logged today → no change
+  } else if (
+  lastLogDate ==
+  DateFormat('yyyy-MM-dd')
+      .format(today.subtract(const Duration(days: 1)))
+   ) {
+  newStreak += 1;
+   } else {
+  newStreak = 1;
+   }
+
+  // 1️⃣ add log
+  await logRef.set({
+    'type': type,
+    'points': points,
+    'date': todayKey,
+    'createdAt': FieldValue.serverTimestamp(),
+  });
+
+  // 2️⃣ update user
+  await userRef.update({
+    'ecoScore': FieldValue.increment(points),
+    'streak': newStreak,
+    'lastLogDate': todayKey,
+  });
+}
+
   /// Fetch FULL user for Provider
   Future<UserModel> fetchUser(String uid) async {
     final doc = await _db.collection('users').doc(uid).get();
