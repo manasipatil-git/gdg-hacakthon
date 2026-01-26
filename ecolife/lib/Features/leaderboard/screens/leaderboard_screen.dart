@@ -21,19 +21,30 @@ class LeaderboardScreen extends StatelessWidget {
       body: StreamBuilder<List<Map<String, dynamic>>>(
         stream: service.getLeaderboard(),
         builder: (context, snapshot) {
-          if (!snapshot.hasData) {
+          // 🔴 HANDLE ERRORS (prevents infinite loader)
+          if (snapshot.hasError) {
+            return const Center(
+              child: Text(
+                'Unable to load leaderboard.\nPlease try again later.',
+                textAlign: TextAlign.center,
+              ),
+            );
+          }
+
+          // ⏳ LOADING STATE
+          if (snapshot.connectionState == ConnectionState.waiting) {
             return const Center(child: CircularProgressIndicator());
+          }
+
+          // 🧾 NO DATA
+          if (!snapshot.hasData || snapshot.data!.isEmpty) {
+            return const Center(child: Text('No leaderboard data yet'));
           }
 
           final users = snapshot.data!;
 
-          if (users.isEmpty) {
-            return const Center(child: Text('No data yet'));
-          }
-
-          final topThree = users.length >= 3
-              ? users.take(3).toList()
-              : users;
+          final topThree =
+              users.length >= 3 ? users.take(3).toList() : users;
 
           final remainingUsers =
               users.length > 3 ? users.sublist(3) : [];
@@ -42,12 +53,12 @@ class LeaderboardScreen extends StatelessWidget {
             padding: const EdgeInsets.all(16),
             child: Column(
               children: [
-                /// 🏆 Top podium (1–3 users)
+                // 🏆 Top podium
                 TopThreePodium(users: topThree),
 
                 const SizedBox(height: 24),
 
-                /// 📋 Remaining ranks (only if >3 users)
+                // 📋 Remaining ranks
                 if (remainingUsers.isNotEmpty)
                   ListView.builder(
                     shrinkWrap: true,

@@ -4,42 +4,40 @@ import '../models/user_model.dart';
 class UserProvider extends ChangeNotifier {
   UserModel? _user;
 
+  /// SESSION LOCK (lives for entire app runtime)
+  bool hasLoggedEcoActionThisSession = false;
+
   UserModel? get user => _user;
 
-  // 🔒 DEMO SESSION FLAG
-  // Ensures eco action can be logged only once per app session
-  bool demoActionLoggedThisSession = false;
-
-  /// Set user after login / onboarding
+  /// Set user data (called on login & Firestore refresh)
+  /// ❗ DO NOT reset session lock here
   void setUser(UserModel user) {
     _user = user;
     notifyListeners();
   }
 
-  /// Mark demo eco action as logged (SESSION ONLY)
-  void markDemoActionLogged() {
-    demoActionLoggedThisSession = true;
-    notifyListeners();
-  }
-
-  /// Update eco score locally (still useful)
-  void updateEcoScore(int delta) {
+  /// Eco action: allowed ONLY once per app session
+  void logEcoActionOncePerSession({int points = 10}) {
     if (_user == null) return;
+
+    if (hasLoggedEcoActionThisSession) return;
+
+    hasLoggedEcoActionThisSession = true;
 
     _user = UserModel(
       uid: _user!.uid,
       name: _user!.name,
-      ecoScore: _user!.ecoScore + delta,
+      ecoScore: _user!.ecoScore + points,
       streak: _user!.streak,
     );
 
     notifyListeners();
   }
 
-  /// Clear everything on logout
+  /// Clear everything on logout (new session after login)
   void clear() {
     _user = null;
-    demoActionLoggedThisSession = false;
+    hasLoggedEcoActionThisSession = false;
     notifyListeners();
   }
 }

@@ -43,91 +43,38 @@ class _LogScreenState extends State<LogScreen> {
     'AC': 0,
   };
 
+  /// 🔥 THIS IS THE ONLY PLACE ecoScore IS UPDATED
   Future<void> _submit(BuildContext context) async {
-    final userProvider = context.read<UserProvider>();
-
-    // 🔒 HARD STOP: already logged this session
-    if (userProvider.demoActionLoggedThisSession) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('✅ You have already logged today’s eco action'),
-        ),
-      );
-      return;
-    }
-
     final uid = FirebaseAuth.instance.currentUser!.uid;
 
-    // 🔹 Use same backend logic as dashboard (single source of truth)
-    await FirestoreService().addTestTrip(uid);
+    // 1️⃣ WRITE eco action to Firestore
+    await FirestoreService().logEcoAction(
+      uid: uid,
+      points: totalScore,
+    );
 
-    // 🔹 Fetch updated user
+    // 2️⃣ Fetch updated user
     final updatedUser = await FirestoreService().fetchUser(uid);
 
     if (!mounted) return;
 
-    // 🔹 Update Provider
+    // 3️⃣ Update Provider (Dashboard + Leaderboard update automatically)
     context.read<UserProvider>().setUser(updatedUser);
-    context.read<UserProvider>().markDemoActionLogged();
 
+    // 4️⃣ Go back to Dashboard
     Navigator.pushReplacementNamed(context, '/dashboard');
   }
 
   @override
   Widget build(BuildContext context) {
-    final demoActionUsed =
-        context.watch<UserProvider>().demoActionLoggedThisSession;
-
     return Scaffold(
       backgroundColor: AppColors.background,
       body: SafeArea(
         child: Padding(
           padding: const EdgeInsets.all(20),
-          child: demoActionUsed
-              ? _alreadyLoggedView(context)
-              : showSummary
-                  ? _summaryView(context)
-                  : _logView(),
+          child: showSummary ? _summaryView(context) : _logView(),
         ),
       ),
-    );
-  }
-
-  /// 🔒 SHOWN IF ACTION ALREADY LOGGED
-  Widget _alreadyLoggedView(BuildContext context) {
-    return Column(
-      mainAxisAlignment: MainAxisAlignment.center,
-      children: [
-        const Icon(Icons.check_circle, size: 72, color: Colors.green),
-        const SizedBox(height: 20),
-        const Text(
-          'Eco action already logged 🌱',
-          style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
-          textAlign: TextAlign.center,
-        ),
-        const SizedBox(height: 12),
-        const Text(
-          'You can log one eco action per session for this demo.',
-          textAlign: TextAlign.center,
-        ),
-        const SizedBox(height: 40),
-        SizedBox(
-          width: double.infinity,
-          height: 54,
-          child: ElevatedButton(
-            onPressed: () {
-              Navigator.pushReplacementNamed(context, '/dashboard');
-            },
-            style: ElevatedButton.styleFrom(
-              backgroundColor: AppColors.primary,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(30),
-              ),
-            ),
-            child: const Text('Back to Dashboard'),
-          ),
-        ),
-      ],
     );
   }
 
