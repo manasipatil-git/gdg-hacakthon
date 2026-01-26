@@ -43,6 +43,7 @@ class FirestoreService {
     });
   }
 
+  /// Fetch FULL user for Provider
   Future<UserModel> fetchUser(String uid) async {
     final doc = await _db.collection('users').doc(uid).get();
 

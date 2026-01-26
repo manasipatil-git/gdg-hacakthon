@@ -13,8 +13,10 @@ import '../widgets/impact_card.dart';
 import '../widgets/quick_actions.dart';
 import '../widgets/leaderboard_preview.dart';
 
-// Challenges widget (ONLY ONE IMPORT)
+// Challenges widget (ONLY ONE SOURCE OF TRUTH)
 import '../../challenges/widgets/active_challenge_card.dart';
+import '../widgets/streak_calendar_card.dart';
+
 
 class DashboardScreen extends StatefulWidget {
   const DashboardScreen({super.key});
@@ -41,7 +43,9 @@ class _DashboardScreenState extends State<DashboardScreen> {
     if (!mounted) return;
 
     context.read<UserProvider>().setUser(fetchedUser);
-    setState(() => isLoadingUser = false);
+    setState(() {
+      isLoadingUser = false;
+    });
   }
 
   @override
@@ -66,7 +70,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
 
               const SizedBox(height: 16),
 
-              // 🌱 Eco Score
+              // 🌱 Eco Score Card (FULL WIDTH)
               if (isLoadingUser || user == null)
                 const EcoScoreCard(
                   score: 0,
@@ -79,14 +83,13 @@ class _DashboardScreenState extends State<DashboardScreen> {
                   streakDays: user.streak,
                 ),
 
-
-              // ─────────────────────────────
-              // 🚧 DEMO ECO ACTION (SESSION SAFE)
-              // ─────────────────────────────
-
               const SizedBox(height: 16),
 
-              // 🚍 Demo Eco Action
+              const SizedBox(height: 16),
+             const StreakCalendarCard(),
+
+
+              // 🚍 DEMO ECO ACTION (SESSION SAFE)
               SizedBox(
                 width: double.infinity,
                 height: 50,
@@ -105,27 +108,25 @@ class _DashboardScreenState extends State<DashboardScreen> {
                           final uid =
                               FirebaseAuth.instance.currentUser!.uid;
 
+                          // 1️⃣ Log demo trip
                           await FirestoreService().addTestTrip(uid);
+
+                          // 2️⃣ Fetch updated user
                           final updatedUser =
                               await FirestoreService().fetchUser(uid);
 
-                          if (mounted) {
-                            // 3️⃣ Update Provider (user + session flag)
-                            context
-                                .read<UserProvider>()
-                                .setUser(updatedUser);
+                          if (!mounted) return;
 
-                            context
-                                .read<UserProvider>()
-                                .markDemoActionLogged();
-                          }
+                          // 3️⃣ Update provider state
+                          context.read<UserProvider>().setUser(updatedUser);
+                          context
+                              .read<UserProvider>()
+                              .markDemoActionLogged();
 
                           ScaffoldMessenger.of(context).showSnackBar(
                             const SnackBar(
-                              content: Text(
-                                '🌱 Eco action logged for today',
-                              ),
-
+                              content:
+                                  Text('🌱 Eco action logged for today'),
                             ),
                           );
                         },
@@ -210,7 +211,8 @@ class DashboardBottomNav extends StatelessWidget {
       items: const [
         BottomNavigationBarItem(icon: Icon(Icons.home), label: 'Home'),
         BottomNavigationBarItem(icon: Icon(Icons.flash_on), label: 'Log'),
-        BottomNavigationBarItem(icon: Icon(Icons.emoji_events), label: 'Ranks'),
+        BottomNavigationBarItem(
+            icon: Icon(Icons.emoji_events), label: 'Ranks'),
         BottomNavigationBarItem(
             icon: Icon(Icons.card_giftcard), label: 'Rewards'),
         BottomNavigationBarItem(
@@ -219,4 +221,3 @@ class DashboardBottomNav extends StatelessWidget {
     );
   }
 }
-
