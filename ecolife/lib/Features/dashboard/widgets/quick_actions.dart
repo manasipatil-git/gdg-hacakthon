@@ -8,8 +8,9 @@ class QuickActions extends StatelessWidget {
   Widget build(BuildContext context) {
     return Row(
       children: [
+        // 🔥 Same as Yesterday (SAFE & WORKING)
         Expanded(
-          child: ElevatedButton(
+          child: ElevatedButton.icon(
             style: ElevatedButton.styleFrom(
               backgroundColor: AppColors.primary,
               shape: RoundedRectangleBorder(
@@ -18,17 +19,29 @@ class QuickActions extends StatelessWidget {
               minimumSize: const Size(double.infinity, 48),
             ),
             onPressed: () {
-              Navigator.pushNamed(context, '/log');
+              // Navigate to log screen where logic already exists
+              Navigator.pushNamed(
+                context,
+                '/log',
+                arguments: {'useYesterday': true},
+              );
             },
-            child: const Text(
-              '⚡ Quick Log',
-              style: TextStyle(fontSize: 14),
+            icon: const Icon(Icons.history),
+            label: const Text(
+              'Same as yesterday',
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: TextStyle(
+                fontSize: 14,
+                fontWeight: FontWeight.w600,
+              ),
             ),
           ),
         ),
 
         const SizedBox(width: 12),
 
+        // 🎯 Challenges (emoji restored)
         Expanded(
           child: OutlinedButton(
             style: OutlinedButton.styleFrom(
@@ -45,6 +58,7 @@ class QuickActions extends StatelessWidget {
               '🎯 Challenges',
               style: TextStyle(
                 fontSize: 14,
+                fontWeight: FontWeight.w600,
                 color: AppColors.primary,
               ),
             ),

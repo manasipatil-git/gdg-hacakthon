@@ -28,4 +28,19 @@ class LogController {
       'ecoScore': FieldValue.increment(score),
     });
   }
+
+  // 🆕 REAL FEATURE: Same as Yesterday (1-tap log)
+  Future<void> logSameAsYesterday() async {
+    // Reset state (important if reused)
+    score = 0;
+    answers.clear();
+
+    // Demo yesterday values (safe defaults)
+    addAnswer('transport', 'Public Transport', 5);
+    addAnswer('food', 'Veg', 4);
+    addAnswer('energy', 'Fan', 3);
+    addAnswer('water', 'Normal Usage', 2);
+
+    await submit();
+  }
 }

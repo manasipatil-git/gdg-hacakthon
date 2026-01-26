@@ -45,7 +45,7 @@ class _LogScreenState extends State<LogScreen> {
     'Long Shower': 0,
   };
 
-  // 🆕 Same as Yesterday (demo values)
+  // ✅ Same as Yesterday (shared logic)
   void _useYesterday() {
     _controller.addAnswer('transport', 'Public Transport', 5);
     _controller.addAnswer('food', 'Veg', 4);
@@ -54,6 +54,21 @@ class _LogScreenState extends State<LogScreen> {
 
     setState(() {
       showSummary = true;
+    });
+  }
+
+  // ✅ AUTO-ACTIVATE WHEN COMING FROM DASHBOARD
+  @override
+  void initState() {
+    super.initState();
+
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      final args =
+          ModalRoute.of(context)?.settings.arguments as Map<String, dynamic>?;
+
+      if (args != null && args['useYesterday'] == true) {
+        _useYesterday();
+      }
     });
   }
 
@@ -135,7 +150,7 @@ class _LogScreenState extends State<LogScreen> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        // 🆕 Live score preview
+        // 🔴 Live Score Preview
         Container(
           padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
           margin: const EdgeInsets.only(bottom: 16),
@@ -169,7 +184,7 @@ class _LogScreenState extends State<LogScreen> {
           ),
         ),
 
-        // 🆕 Same as yesterday button
+        // 🔥 Same as Yesterday (manual trigger still available)
         GestureDetector(
           onTap: _useYesterday,
           child: Container(

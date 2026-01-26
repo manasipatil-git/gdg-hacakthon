@@ -65,7 +65,7 @@ class DashboardScreen extends StatelessWidget {
 
                   const SizedBox(height: 16),
 
-                  // 🌱 Eco Score Card (LIVE)
+                  // 🌱 Eco Score Card
                   EcoScoreCard(
                     score: user.ecoScore,
                     streakDays: user.streak,
@@ -73,12 +73,12 @@ class DashboardScreen extends StatelessWidget {
 
                   const SizedBox(height: 16),
 
-                  // 🔥 Streak Calendar (reads from logs)
+                  // 🔥 Streak Calendar
                   const StreakCalendarCard(),
 
                   const SizedBox(height: 16),
 
-                  // ➕ Log Action CTA
+                  // ➕ Primary CTA
                   SizedBox(
                     width: double.infinity,
                     height: 50,
@@ -100,14 +100,26 @@ class DashboardScreen extends StatelessWidget {
                     ),
                   ),
 
-                  const SizedBox(height: 12),
-
-                  // ⚡ Impact
-                  const ImpactCard(),
-
                   const SizedBox(height: 16),
 
-                  // ⚡ Quick Actions
+                  // 🌍 Impact Highlight (Promoted Insight)
+                  Container(
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(16),
+                      boxShadow: [
+                        BoxShadow(
+                          color: AppColors.primary.withOpacity(0.08),
+                          blurRadius: 12,
+                          offset: const Offset(0, 6),
+                        ),
+                      ],
+                    ),
+                    child: const ImpactCard(),
+                  ),
+
+                  const SizedBox(height: 20),
+
+                  // ⚡ Secondary Actions (non-duplicating)
                   const QuickActions(),
 
                   const SizedBox(height: 24),
