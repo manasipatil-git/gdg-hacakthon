@@ -10,9 +10,17 @@ class TopThreePodium extends StatelessWidget {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceEvenly,
       children: [
-        _podium(users[1], 2),
-        _podium(users[0], 1, isWinner: true),
-        _podium(users[2], 3),
+        // 🥈 Second place (only if exists)
+        if (users.length >= 2)
+          _podium(users[1], 2),
+
+        // 🥇 First place (always if at least 1 user)
+        if (users.isNotEmpty)
+          _podium(users[0], 1, isWinner: true),
+
+        // 🥉 Third place (only if exists)
+        if (users.length >= 3)
+          _podium(users[2], 3),
       ],
     );
   }
@@ -26,7 +34,10 @@ class TopThreePodium extends StatelessWidget {
       children: [
         CircleAvatar(
           radius: isWinner ? 28 : 24,
-          child: Text(user['name'][0]),
+          child: Text(
+            user['name'][0],
+            style: const TextStyle(fontWeight: FontWeight.bold),
+          ),
         ),
         const SizedBox(height: 8),
         Container(
@@ -37,7 +48,10 @@ class TopThreePodium extends StatelessWidget {
             color: Colors.green.shade100,
             borderRadius: BorderRadius.circular(16),
           ),
-          child: Text('$rank'),
+          child: Text(
+            '$rank',
+            style: const TextStyle(fontSize: 16),
+          ),
         ),
       ],
     );
