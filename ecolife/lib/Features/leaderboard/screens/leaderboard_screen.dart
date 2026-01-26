@@ -18,7 +18,7 @@ class LeaderboardScreen extends StatelessWidget {
         elevation: 0,
         title: const Text('Leaderboard'),
       ),
-      body: StreamBuilder(
+      body: StreamBuilder<List<Map<String, dynamic>>>(
         stream: service.getLeaderboard(),
         builder: (context, snapshot) {
           if (!snapshot.hasData) {
@@ -26,32 +26,44 @@ class LeaderboardScreen extends StatelessWidget {
           }
 
           final users = snapshot.data!;
+
           if (users.isEmpty) {
             return const Center(child: Text('No data yet'));
           }
+
+          final topThree = users.length >= 3
+              ? users.take(3).toList()
+              : users;
+
+          final remainingUsers =
+              users.length > 3 ? users.sublist(3) : [];
 
           return SingleChildScrollView(
             padding: const EdgeInsets.all(16),
             child: Column(
               children: [
-                TopThreePodium(users: users.take(3).toList()),
+                /// 🏆 Top podium (1–3 users)
+                TopThreePodium(users: topThree),
+
                 const SizedBox(height: 24),
 
-                ListView.builder(
-                  shrinkWrap: true,
-                  physics: const NeverScrollableScrollPhysics(),
-                  itemCount: users.length - 3,
-                  itemBuilder: (context, index) {
-                    final user = users[index + 3];
-                    final rank = index + 4;
+                /// 📋 Remaining ranks (only if >3 users)
+                if (remainingUsers.isNotEmpty)
+                  ListView.builder(
+                    shrinkWrap: true,
+                    physics: const NeverScrollableScrollPhysics(),
+                    itemCount: remainingUsers.length,
+                    itemBuilder: (context, index) {
+                      final user = remainingUsers[index];
+                      final rank = index + 4;
 
-                    return LeaderboardRow(
-                      rank: rank,
-                      name: user['name'],
-                      score: user['ecoScore'],
-                    );
-                  },
-                ),
+                      return LeaderboardRow(
+                        rank: rank,
+                        name: user['name'],
+                        score: user['ecoScore'],
+                      );
+                    },
+                  ),
               ],
             ),
           );
