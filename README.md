@@ -106,6 +106,24 @@ Built mobile-first with a clean, demo-friendly flow.
 
 ---
 
+## 🛠️ How to Build & Run EcoLife
+
+### Prerequisites
+- Flutter SDK (stable)
+- Android Studio or VS Code
+- Firebase project with Authentication and Firestore enabled
+
+### Steps to run locally
+```bash
+git clone https://github.com/manasipatil-git/gdg-hacakthon.git
+cd gdg-hacakthon
+flutter pub get
+flutter run
+```
+
+Ensure Firebase configuration files (`google-services.json` or `firebase_options.dart`) are added before running the app.
+
+---
 ## Try EcoLife
 
 📱 Android APK and 🎥 demo video available in **GitHub Releases**
