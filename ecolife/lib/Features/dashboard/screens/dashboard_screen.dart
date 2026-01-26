@@ -6,13 +6,15 @@ import '../../../core/constants/colors.dart';
 import '../../../core/providers/user_provider.dart';
 import '../../../core/services/firestore_service.dart';
 
-// Widgets
+// Dashboard widgets
 import '../widgets/greeting_header.dart';
 import '../widgets/eco_score_card.dart';
 import '../widgets/impact_card.dart';
 import '../widgets/quick_actions.dart';
-import '../widgets/active_challenge_card.dart';
 import '../widgets/leaderboard_preview.dart';
+
+// Challenges widget (ONLY ONE IMPORT)
+import '../../challenges/widgets/active_challenge_card.dart';
 
 class DashboardScreen extends StatefulWidget {
   const DashboardScreen({super.key});
@@ -37,12 +39,10 @@ class _DashboardScreenState extends State<DashboardScreen> {
 
     final fetchedUser = await FirestoreService().fetchUser(uid);
 
-    if (mounted) {
-      context.read<UserProvider>().setUser(fetchedUser);
-      setState(() {
-        isLoadingUser = false;
-      });
-    }
+    if (!mounted) return;
+
+    context.read<UserProvider>().setUser(fetchedUser);
+    setState(() => isLoadingUser = false);
   }
 
   @override
@@ -58,14 +58,14 @@ class _DashboardScreenState extends State<DashboardScreen> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              /// 🔹 Greeting Header
+              // 👋 Greeting
               GreetingHeader(
                 name: user?.name.isNotEmpty == true ? user!.name : 'there',
               ),
 
               const SizedBox(height: 16),
 
-              /// 🔹 Eco Score Card
+              // 🌱 Eco Score
               if (isLoadingUser || user == null)
                 const EcoScoreCard(
                   score: 0,
@@ -78,11 +78,9 @@ class _DashboardScreenState extends State<DashboardScreen> {
                   streakDays: user.streak,
                 ),
 
-              // ─────────────────────────────
-              // 🚧 DEMO ECO ACTION (FIXED)
-              // ─────────────────────────────
               const SizedBox(height: 16),
 
+              // 🚍 Demo Eco Action
               SizedBox(
                 width: double.infinity,
                 height: 50,
@@ -96,34 +94,25 @@ class _DashboardScreenState extends State<DashboardScreen> {
                   onPressed: (user == null || demoActionUsed)
                       ? null
                       : () async {
-                          debugPrint("DEMO ACTION CLICKED");
-
                           final uid =
                               FirebaseAuth.instance.currentUser!.uid;
 
-                          // 1️⃣ Log eco action
                           await FirestoreService().addTestTrip(uid);
-
-                          // 2️⃣ Fetch updated user
                           final updatedUser =
                               await FirestoreService().fetchUser(uid);
 
-                          // 3️⃣ Update Provider + UI
-                          if (mounted) {
-                            context
-                                .read<UserProvider>()
-                                .setUser(updatedUser);
-                            setState(() {
-                              demoActionUsed = true;
-                            });
-                          }
+                          if (!mounted) return;
 
-                          // 4️⃣ Demo feedback
+                          context
+                              .read<UserProvider>()
+                              .setUser(updatedUser);
+
+                          setState(() => demoActionUsed = true);
+
                           ScaffoldMessenger.of(context).showSnackBar(
                             const SnackBar(
-                              content: Text(
-                                '🌱 Eco action logged! Score updated',
-                              ),
+                              content:
+                                  Text('🌱 Eco action logged! Score updated'),
                             ),
                           );
                         },
@@ -138,22 +127,30 @@ class _DashboardScreenState extends State<DashboardScreen> {
 
               const SizedBox(height: 12),
 
-              /// 🔹 Impact card
+              // ⚡ Impact
               const ImpactCard(),
 
               const SizedBox(height: 16),
 
-              /// 🔹 Quick actions
+              // ⚡ Quick Actions
               const QuickActions(),
 
               const SizedBox(height: 24),
 
-              /// 🔹 Active challenge
+              // 🎯 Active Challenge
+              const Text(
+                'Active Challenge',
+                style: TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              const SizedBox(height: 12),
               const ActiveChallengeCard(),
 
               const SizedBox(height: 24),
 
-              /// 🔹 Leaderboard preview
+              // 🏆 Leaderboard
               const LeaderboardPreview(),
 
               const SizedBox(height: 32),
@@ -209,3 +206,4 @@ class DashboardBottomNav extends StatelessWidget {
     );
   }
 }
+

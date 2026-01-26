@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../../core/constants/colors.dart';
 
 class QuickActions extends StatelessWidget {
   const QuickActions({super.key});
@@ -9,19 +10,44 @@ class QuickActions extends StatelessWidget {
       children: [
         Expanded(
           child: ElevatedButton(
+            style: ElevatedButton.styleFrom(
+              backgroundColor: AppColors.primary,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(14),
+              ),
+              minimumSize: const Size(double.infinity, 48),
+            ),
             onPressed: () {
               Navigator.pushNamed(context, '/log');
             },
-            child: const Text('⚡ Quick Log'),
+            child: const Text(
+              '⚡ Quick Log',
+              style: TextStyle(fontSize: 14),
+            ),
           ),
         ),
+
         const SizedBox(width: 12),
+
         Expanded(
           child: OutlinedButton(
+            style: OutlinedButton.styleFrom(
+              side: BorderSide(color: AppColors.primary),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(14),
+              ),
+              minimumSize: const Size(double.infinity, 48),
+            ),
             onPressed: () {
-              Navigator.pushNamed(context, '/challenges');
+              Navigator.of(context).pushNamed('/challenges');
             },
-            child: const Text('🎯 Challenges'),
+            child: Text(
+              '🎯 Challenges',
+              style: TextStyle(
+                fontSize: 14,
+                color: AppColors.primary,
+              ),
+            ),
           ),
         ),
       ],

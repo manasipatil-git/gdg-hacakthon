@@ -27,6 +27,9 @@ import '../features/onboarding/screens/onboarding_food_screen.dart';
 import '../features/onboarding/screens/onboarding_notifications_screen.dart';
 import '../features/onboarding/screens/onboarding_accommodation_screen.dart';
 
+//challenges
+import '../features/challenges/screens/challenges_screen.dart';
+
 class AppRouter {
   static Route<dynamic> generateRoute(RouteSettings settings) {
     switch (settings.name) {
@@ -104,6 +107,12 @@ case '/onboarding-notifications':
         return MaterialPageRoute(
           builder: (_) => const SettingsScreen(),
         );
+
+        case '/challenges':
+         return MaterialPageRoute(
+           builder: (_) => const ChallengesScreen(),
+         );
+
 
       default:
         return MaterialPageRoute(
