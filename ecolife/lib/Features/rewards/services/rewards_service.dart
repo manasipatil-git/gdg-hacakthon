@@ -2,52 +2,102 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import '../models/reward_model.dart';
 
 class RewardsService {
-  final _db = FirebaseFirestore.instance;
+  final FirebaseFirestore _firestore = FirebaseFirestore.instance;
 
-  Stream<int> userEcoScore(String uid) {
-    return _db.collection('users').doc(uid).snapshots().map(
-          (doc) => doc.data()?['ecoScore'] ?? 0,
-        );
+  /// Get user's current eco score
+  Future<int> getUserScore(String uid) async {
+    final doc = await _firestore.collection('users').doc(uid).get();
+    return doc.data()?['ecoScore'] ?? 0;
   }
 
-  Stream<List<Reward>> getRewards() {
-    return _db
-        .collection('rewards')
-        .where('active', isEqualTo: true)
-        .snapshots()
-        .map((snapshot) {
-      return snapshot.docs
-          .map((doc) => Reward.fromMap(doc.id, doc.data()))
-          .toList();
-    });
-  }
-
+  /// Redeem a reward (deduct points and log redemption)
   Future<void> redeemReward({
     required String uid,
-    required Reward reward,
+    required String itemId,
+    required String itemName,
+    required String itemEmoji,
+    required int cost,
+    required String location,
   }) async {
-    final userRef = _db.collection('users').doc(uid);
-    final redemptionRef = _db.collection('redemptions').doc();
+    // Get current score
+    final userDoc = await _firestore.collection('users').doc(uid).get();
+    final currentScore = userDoc.data()?['ecoScore'] ?? 0;
 
-    await _db.runTransaction((tx) async {
-      final userSnap = await tx.get(userRef);
-      final currentScore = userSnap['ecoScore'] ?? 0;
+    if (currentScore < cost) {
+      throw Exception('Insufficient points');
+    }
 
-      if (currentScore < reward.ecoScoreCost) {
-        throw Exception('Insufficient EcoScore');
-      }
+    final newScore = currentScore - cost;
 
-      tx.update(userRef, {
-        'ecoScore': currentScore - reward.ecoScoreCost,
-      });
+    // Create redemption record
+    final redemption = RedemptionHistory(
+      id: '', // Will be set by Firestore
+      itemId: itemId,
+      itemName: itemName,
+      itemEmoji: itemEmoji,
+      pointsCost: cost,
+      location: location,
+      redeemedAt: DateTime.now(),
+      isUsed: false,
+    );
 
-      tx.set(redemptionRef, {
-        'uid': uid,
-        'rewardId': reward.id,
-        'ecoScoreUsed': reward.ecoScoreCost,
-        'timestamp': FieldValue.serverTimestamp(),
-        'qrToken': redemptionRef.id,
-      });
+    // Use batch write for atomic operation
+    final batch = _firestore.batch();
+
+    // Update user score
+    batch.update(
+      _firestore.collection('users').doc(uid),
+      {'ecoScore': newScore},
+    );
+
+    // Add redemption history
+    final redemptionRef = _firestore
+        .collection('users')
+        .doc(uid)
+        .collection('redemptions')
+        .doc();
+    batch.set(redemptionRef, redemption.toMap());
+
+    await batch.commit();
+  }
+
+  /// Get user's redemption history
+  Stream<List<RedemptionHistory>> getRedemptionHistory(String uid) {
+    return _firestore
+        .collection('users')
+        .doc(uid)
+        .collection('redemptions')
+        .orderBy('redeemedAt', descending: true)
+        .snapshots()
+        .map((snapshot) {
+      return snapshot.docs.map((doc) {
+        return RedemptionHistory.fromFirestore(doc.id, doc.data());
+      }).toList();
     });
+  }
+
+  /// Mark a redemption as used
+  Future<void> markAsUsed(String uid, String redemptionId) async {
+    await _firestore
+        .collection('users')
+        .doc(uid)
+        .collection('redemptions')
+        .doc(redemptionId)
+        .update({'isUsed': true});
+  }
+
+  /// Get total points spent
+  Future<int> getTotalPointsSpent(String uid) async {
+    final snapshot = await _firestore
+        .collection('users')
+        .doc(uid)
+        .collection('redemptions')
+        .get();
+
+    int total = 0;
+    for (var doc in snapshot.docs) {
+      total += (doc.data()['pointsCost'] as int? ?? 0);
+    }
+    return total;
   }
 }
