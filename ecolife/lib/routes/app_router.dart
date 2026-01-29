@@ -33,95 +33,70 @@ import '../features/challenges/screens/challenges_screen.dart';
 class AppRouter {
   static Route<dynamic> generateRoute(RouteSettings settings) {
     switch (settings.name) {
-
       case '/':
-        return MaterialPageRoute(
-          builder: (_) => const WelcomeScreen(),
-        );
+        return MaterialPageRoute(builder: (_) => const WelcomeScreen());
 
       case '/login':
-        return MaterialPageRoute(
-          builder: (_) => LoginScreen(),
-        );
+        return MaterialPageRoute(builder: (_) => LoginScreen());
 
       case '/signup':
-        return MaterialPageRoute(
-          builder: (_) => SignupScreen(),
-        );
+        return MaterialPageRoute(builder: (_) => SignupScreen());
 
       // -------- ONBOARDING --------
-case '/onboarding':
-  return MaterialPageRoute(
-    builder: (_) => const OnboardingCollegeScreen(),
-    settings: settings,
-  );
+      case '/onboarding':
+        return MaterialPageRoute(
+          builder: (_) => const OnboardingCollegeScreen(),
+          settings: settings,
+        );
 
-case '/onboarding-accommodation':
-  return MaterialPageRoute(
-    builder: (_) => const OnboardingAccommodationScreen(),
-    settings: settings,
-  );
+      case '/onboarding-accommodation':
+        return MaterialPageRoute(
+          builder: (_) => const OnboardingAccommodationScreen(),
+          settings: settings,
+        );
 
-case '/onboarding-transport':
-  return MaterialPageRoute(
-    builder: (_) => const OnboardingTravelScreen(),
-    settings: settings,
-  );
+      case '/onboarding-transport':
+        return MaterialPageRoute(
+          builder: (_) => const OnboardingTravelScreen(),
+          settings: settings,
+        );
 
-case '/onboarding-food':
-  return MaterialPageRoute(
-    builder: (_) => const OnboardingFoodScreen(),
-    settings: settings,
-  );
+      case '/onboarding-food':
+        return MaterialPageRoute(
+          builder: (_) => const OnboardingFoodScreen(),
+          settings: settings,
+        );
 
-case '/onboarding-notifications':
-  return MaterialPageRoute(
-    builder: (_) => const OnboardingNotificationScreen(),
-    settings: settings,
-  );
-
+      case '/onboarding-notifications':
+        return MaterialPageRoute(
+          builder: (_) => const OnboardingNotificationScreen(),
+          settings: settings,
+        );
 
       // -------- DASHBOARD --------
       case '/dashboard':
-        return MaterialPageRoute(
-          builder: (_) => const DashboardScreen(),
-        );
+        return MaterialPageRoute(builder: (_) => const DashboardScreen());
 
       // -------- OTHER --------
       case '/log':
-        return MaterialPageRoute(
-          builder: (_) => const LogScreen(),
-        );
+        return MaterialPageRoute(builder: (_) => const LogScreen());
 
       case '/leaderboard':
-        return MaterialPageRoute(
-          builder: (_) => const LeaderboardScreen(),
-        );
+        return MaterialPageRoute(builder: (_) => const LeaderboardScreen());
 
       case '/rewards':
-        return MaterialPageRoute(
-          builder: (_) => const RewardsScreen(),
-        );
+        return MaterialPageRoute(builder: (_) => const RewardsScreen());
 
       case '/settings':
-        return MaterialPageRoute(
-          builder: (_) => const SettingsScreen(),
-        );
+        return MaterialPageRoute(builder: (_) => const SettingsScreen());
 
-        case '/challenges':
-         return MaterialPageRoute(
-           builder: (_) => const ChallengesScreen(),
-         );
-
+      case '/challenges':
+        return MaterialPageRoute(builder: (_) => const ChallengesScreen());
 
       default:
         return MaterialPageRoute(
           builder: (_) => Scaffold(
-            body: Center(
-              child: Text(
-                'Route not found: ${settings.name}',
-              ),
-            ),
+            body: Center(child: Text('Route not found: ${settings.name}')),
           ),
         );
     }

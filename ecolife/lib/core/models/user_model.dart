@@ -12,21 +12,18 @@ class UserModel {
   });
 
   /// Factory to convert Firestore document → UserModel
+  /// Firestore stores streak as currentStreak; accepts both for compatibility.
   factory UserModel.fromMap(String uid, Map<String, dynamic> data) {
     return UserModel(
       uid: uid,
       name: data['name'] ?? '',
       ecoScore: data['ecoScore'] ?? 0,
-      streak: data['streak'] ?? 0,
+      streak: ((data['currentStreak'] ?? data['streak'] ?? 0) as num).toInt(),
     );
   }
 
   /// Convert UserModel → Firestore map (for updates if needed)
   Map<String, dynamic> toMap() {
-    return {
-      'name': name,
-      'ecoScore': ecoScore,
-      'streak': streak,
-    };
+    return {'name': name, 'ecoScore': ecoScore, 'streak': streak};
   }
 }

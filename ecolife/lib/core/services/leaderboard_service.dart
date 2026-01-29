@@ -17,6 +17,7 @@ class LeaderboardService {
               'uid': doc.id,
               'name': data['name'] ?? 'User',
               'ecoScore': data['ecoScore'] ?? 0,
+              'streak': data['currentStreak'] ?? 0,
             };
           }).toList();
         });
