@@ -53,7 +53,7 @@ class _CreateCampaignScreenState extends State<CreateCampaignScreen> {
 
     setState(() => _isLoading = true);
 
-    // Always use placeholder image (safe for Windows)
+    // ✅ Auto image only (NO ImagePicker)
     final imageUrl = await CloudinaryService.pickAndUploadImage();
 
     final campaign = Campaign(
@@ -64,8 +64,9 @@ class _CreateCampaignScreenState extends State<CreateCampaignScreen> {
       imageUrl: imageUrl ??
           'https://via.placeholder.com/600/4CAF50/FFFFFF?text=Campaign',
       type: _selectedType,
-      location:
-          _locationController.text.trim().isEmpty ? null : _locationController.text.trim(),
+      location: _locationController.text.trim().isEmpty
+          ? null
+          : _locationController.text.trim(),
       startDate: _startDate!,
       endDate: _endDate!,
       goal: CampaignGoal(
@@ -138,14 +139,16 @@ class _CreateCampaignScreenState extends State<CreateCampaignScreen> {
 
               TextFormField(
                 controller: _titleController,
-                decoration: const InputDecoration(labelText: 'Campaign Title *'),
+                decoration:
+                    const InputDecoration(labelText: 'Campaign Title *'),
                 validator: (v) => v!.isEmpty ? 'Required' : null,
               ),
               const SizedBox(height: 16),
 
               TextFormField(
                 controller: _orgController,
-                decoration: const InputDecoration(labelText: 'Organization Name *'),
+                decoration:
+                    const InputDecoration(labelText: 'Organization Name *'),
                 validator: (v) => v!.isEmpty ? 'Required' : null,
               ),
               const SizedBox(height: 16),
@@ -153,13 +156,16 @@ class _CreateCampaignScreenState extends State<CreateCampaignScreen> {
               DropdownButtonFormField<CampaignType>(
                 value: _selectedType,
                 items: CampaignType.values
-                    .map((e) => DropdownMenuItem(
-                          value: e,
-                          child: Text(e.displayName),
-                        ))
+                    .map(
+                      (e) => DropdownMenuItem(
+                        value: e,
+                        child: Text(e.displayName),
+                      ),
+                    )
                     .toList(),
                 onChanged: (v) => setState(() => _selectedType = v!),
-                decoration: const InputDecoration(labelText: 'Campaign Type *'),
+                decoration:
+                    const InputDecoration(labelText: 'Campaign Type *'),
               ),
               const SizedBox(height: 16),
 
@@ -172,7 +178,8 @@ class _CreateCampaignScreenState extends State<CreateCampaignScreen> {
               TextFormField(
                 controller: _targetController,
                 keyboardType: TextInputType.number,
-                decoration: const InputDecoration(labelText: 'Target Goal *'),
+                decoration:
+                    const InputDecoration(labelText: 'Target Goal *'),
                 validator: (v) =>
                     double.tryParse(v ?? '') == null ? 'Enter number' : null,
               ),
@@ -181,13 +188,16 @@ class _CreateCampaignScreenState extends State<CreateCampaignScreen> {
               DropdownButtonFormField<GoalType>(
                 value: _selectedGoalType,
                 items: GoalType.values
-                    .map((e) => DropdownMenuItem(
-                          value: e,
-                          child: Text('${e.displayName} (${e.unit})'),
-                        ))
+                    .map(
+                      (e) => DropdownMenuItem(
+                        value: e,
+                        child: Text('${e.displayName} (${e.unit})'),
+                      ),
+                    )
                     .toList(),
                 onChanged: (v) => setState(() => _selectedGoalType = v!),
-                decoration: const InputDecoration(labelText: 'Goal Type *'),
+                decoration:
+                    const InputDecoration(labelText: 'Goal Type *'),
               ),
               const SizedBox(height: 24),
 
@@ -221,7 +231,8 @@ class _CreateCampaignScreenState extends State<CreateCampaignScreen> {
               TextFormField(
                 controller: _descController,
                 maxLines: 5,
-                decoration: const InputDecoration(labelText: 'Description *'),
+                decoration:
+                    const InputDecoration(labelText: 'Description *'),
                 validator: (v) => v!.isEmpty ? 'Required' : null,
               ),
               const SizedBox(height: 32),

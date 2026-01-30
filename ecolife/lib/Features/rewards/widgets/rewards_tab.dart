@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import '../widgets/reward_item_card.dart';
 import '../widgets/redeem_dialog.dart';
 import '../data/reward_items.dart';
-import '../services/rewards_service.dart';
+import '../../../core/services/firestore_service.dart';
 import '../../../core/constants/colors.dart';
 
 class RewardsTab extends StatelessWidget {
@@ -20,21 +20,17 @@ class RewardsTab extends StatelessWidget {
     // Group rewards by category
     final groupedRewards = <String, List<RewardItem>>{};
     for (var item in rewardItems) {
-      if (!groupedRewards.containsKey(item.category)) {
-        groupedRewards[item.category] = [];
-      }
+      groupedRewards.putIfAbsent(item.category, () => []);
       groupedRewards[item.category]!.add(item);
     }
 
     return ListView(
       padding: const EdgeInsets.all(16),
       children: [
-        // Categories
         ...groupedRewards.entries.map((entry) {
           return Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // Category Header
               Padding(
                 padding: const EdgeInsets.only(left: 4, bottom: 12, top: 8),
                 child: Text(
@@ -46,8 +42,7 @@ class RewardsTab extends StatelessWidget {
                   ),
                 ),
               ),
-              
-              // Items in category
+
               ...entry.value.map((item) {
                 return RewardItemCard(
                   item: item,
@@ -55,7 +50,7 @@ class RewardsTab extends StatelessWidget {
                   onTap: () => _handleRewardTap(context, item),
                 );
               }),
-              
+
               const SizedBox(height: 16),
             ],
           );
@@ -65,32 +60,18 @@ class RewardsTab extends StatelessWidget {
   }
 
   void _handleRewardTap(BuildContext context, RewardItem item) {
-    // Check if user has enough points
     if (userScore < item.cost) {
       final shortage = item.cost - userScore;
+
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Row(
-            children: [
-              const Icon(Icons.warning_amber_rounded, color: Colors.white),
-              const SizedBox(width: 12),
-              Expanded(
-                child: Text('You need $shortage more points!'),
-              ),
-            ],
-          ),
+          content: Text('You need $shortage more points!'),
           backgroundColor: Colors.orange.shade700,
-          behavior: SnackBarBehavior.floating,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(12),
-          ),
-          margin: const EdgeInsets.all(16),
         ),
       );
       return;
     }
 
-    // Show redeem dialog
     showDialog(
       context: context,
       barrierDismissible: false,
@@ -103,92 +84,49 @@ class RewardsTab extends StatelessWidget {
 
   Future<void> _handleRedeem(BuildContext context, RewardItem item) async {
     try {
-      // Show loading
+      // Loading
       showDialog(
         context: context,
         barrierDismissible: false,
-        builder: (context) => const Center(
+        builder: (_) => const Center(
           child: CircularProgressIndicator(color: Colors.white),
         ),
       );
 
-      // Redeem the reward
-      await RewardsService().redeemReward(
+      // 🔥 CORRECT CALL (FirestoreService)
+      await FirestoreService().redeemReward(
         uid: uid,
-        itemId: item.id,
-        itemName: item.name,
-        itemEmoji: item.emoji,
-        cost: item.cost,
-        location: item.location,
+        pointsRequired: item.cost,
+        rewardId: item.id,
+        rewardName: item.name,
       );
 
-      if (context.mounted) {
-        // Close loading dialog
-        Navigator.pop(context);
-        // Close redeem dialog
-        Navigator.pop(context);
+      if (!context.mounted) return;
 
-        // Show success message
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Row(
-              children: [
-                const Icon(Icons.check_circle, color: Colors.white, size: 24),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Text(
-                        '${item.emoji} ${item.name} Redeemed!',
-                        style: const TextStyle(
-                          fontWeight: FontWeight.bold,
-                          fontSize: 15,
-                        ),
-                      ),
-                      Text(
-                        '-${item.cost} points • Show at ${item.location}',
-                        style: const TextStyle(fontSize: 12),
-                      ),
-                    ],
-                  ),
-                ),
-              ],
-            ),
-            backgroundColor: AppColors.primary,
-            behavior: SnackBarBehavior.floating,
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(12),
-            ),
-            margin: const EdgeInsets.all(16),
-            duration: const Duration(seconds: 4),
+      Navigator.pop(context); // loading
+      Navigator.pop(context); // redeem dialog
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            '${item.emoji} ${item.name} redeemed (-${item.cost} pts)',
           ),
-        );
-      }
+          backgroundColor: AppColors.primary,
+          behavior: SnackBarBehavior.floating,
+          margin: const EdgeInsets.all(16),
+        ),
+      );
     } catch (e) {
-      if (context.mounted) {
-        // Close loading dialog
-        Navigator.pop(context);
-        
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Row(
-              children: [
-                const Icon(Icons.error_outline, color: Colors.white),
-                const SizedBox(width: 12),
-                Expanded(child: Text('Error: ${e.toString()}')),
-              ],
-            ),
-            backgroundColor: Colors.red,
-            behavior: SnackBarBehavior.floating,
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(12),
-            ),
-            margin: const EdgeInsets.all(16),
-          ),
-        );
-      }
+      if (!context.mounted) return;
+
+      Navigator.pop(context); // loading
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(e.toString()),
+          backgroundColor: Colors.red,
+        ),
+      );
     }
   }
 }

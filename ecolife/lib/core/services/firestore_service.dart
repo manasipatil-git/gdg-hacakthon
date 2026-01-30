@@ -146,4 +146,44 @@ class FirestoreService {
         .limit(limit)
         .snapshots();
   }
+
+  Future<void> redeemReward({
+  required String uid,
+  required int pointsRequired,
+  required String rewardId,
+  required String rewardName,
+}) async {
+  final userRef = _db.collection('users').doc(uid);
+
+  await _db.runTransaction((transaction) async {
+    final userSnap = await transaction.get(userRef);
+
+    if (!userSnap.exists) {
+      throw Exception('User not found');
+    }
+
+    final currentScore = userSnap['ecoScore'] ?? 0;
+
+    if (currentScore < pointsRequired) {
+      throw Exception('Not enough EcoScore');
+    }
+
+    // 1️⃣ Deduct EcoScore
+    transaction.update(userRef, {
+      'ecoScore': currentScore - pointsRequired,
+    });
+
+    // 2️⃣ Add reward history
+    final rewardRef = userRef
+        .collection('rewardsHistory')
+        .doc();
+
+    transaction.set(rewardRef, {
+      'rewardId': rewardId,
+      'rewardName': rewardName,
+      'pointsUsed': pointsRequired,
+      'redeemedAt': FieldValue.serverTimestamp(),
+    });
+  });
+}
 }
