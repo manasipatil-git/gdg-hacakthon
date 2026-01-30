@@ -23,11 +23,12 @@ class FirestoreService {
       'lastLogDate': null,
       'onboardingCompleted': false,
       'leaderboardOptIn': true,
+      'following': <String>[],
+      'followers': <String>[],
       'joinedAt': FieldValue.serverTimestamp(),
     });
   }
 
-  /// ✅ Complete onboarding (NO side effects)
   Future<void> completeOnboarding(
     String uid,
     Map<String, dynamic> onboardingData,
@@ -38,27 +39,19 @@ class FirestoreService {
     });
   }
 
-  /// ✅ CHECK onboarding status (THIS FIXES YOUR ERROR)
   Future<bool> isOnboardingCompleted(String uid) async {
     final doc = await _db.collection('users').doc(uid).get();
-
-    if (!doc.exists || doc.data() == null) {
-      return false;
-    }
-
+    if (!doc.exists || doc.data() == null) return false;
     return doc.data()!['onboardingCompleted'] == true;
   }
 
-  /// ONE-TIME FETCH (used only where needed)
   Future<UserModel> fetchUser(String uid) async {
     final doc = await _db.collection('users').doc(uid).get();
-
     if (!doc.exists || doc.data() == null) {
       throw Exception('User not found');
     }
 
     final data = doc.data()!;
-
     return UserModel(
       uid: uid,
       name: data['name'] ?? '',
@@ -67,13 +60,10 @@ class FirestoreService {
     );
   }
 
-  /// 🔥 LIVE USER STREAM (streak + ecoScore live updates)
   Stream<UserModel> userStream(String uid) {
     return _db.collection('users').doc(uid).snapshots().map((doc) {
       final data = doc.data();
-      if (data == null) {
-        throw Exception('User not found');
-      }
+      if (data == null) throw Exception('User not found');
 
       return UserModel(
         uid: uid,
@@ -81,6 +71,123 @@ class FirestoreService {
         ecoScore: data['ecoScore'] ?? 0,
         streak: data['currentStreak'] ?? 0,
       );
+    });
+  }
+
+  /* ─────────────────────────────
+   FOLLOW / UNFOLLOW
+  ───────────────────────────── */
+
+  Future<void> followUser({
+    required String currentUid,
+    required String targetUid,
+  }) async {
+    final currentUserRef = _db.collection('users').doc(currentUid);
+    final targetUserRef = _db.collection('users').doc(targetUid);
+
+    await _db.runTransaction((tx) async {
+      tx.update(currentUserRef, {
+        'following': FieldValue.arrayUnion([targetUid]),
+      });
+      tx.update(targetUserRef, {
+        'followers': FieldValue.arrayUnion([currentUid]),
+      });
+    });
+  }
+
+  Future<void> unfollowUser({
+    required String currentUid,
+    required String targetUid,
+  }) async {
+    final currentUserRef = _db.collection('users').doc(currentUid);
+    final targetUserRef = _db.collection('users').doc(targetUid);
+
+    await _db.runTransaction((tx) async {
+      tx.update(currentUserRef, {
+        'following': FieldValue.arrayRemove([targetUid]),
+      });
+      tx.update(targetUserRef, {
+        'followers': FieldValue.arrayRemove([currentUid]),
+      });
+    });
+  }
+
+  /* ─────────────────────────────
+   🔥 SUGGESTED USERS (TOP RANKERS)
+  ───────────────────────────── */
+
+  Future<List<Map<String, dynamic>>> getSuggestedUsers({
+    required String currentUid,
+    int limit = 5,
+  }) async {
+    final currentUserDoc =
+        await _db.collection('users').doc(currentUid).get();
+
+    final List<String> alreadyFollowing =
+        List<String>.from(currentUserDoc.data()?['following'] ?? []);
+
+    final snapshot = await _db
+        .collection('users')
+        .orderBy('ecoScore', descending: true)
+        .limit(limit + 5)
+        .get();
+
+    final users = snapshot.docs
+        .where((doc) =>
+            doc.id != currentUid &&
+            !alreadyFollowing.contains(doc.id))
+        .map((doc) => {
+              'uid': doc.id,
+              ...doc.data(),
+            })
+        .take(limit)
+        .toList();
+
+    return users;
+  }
+
+  /* ─────────────────────────────
+   🔍 SEARCH USERS BY NAME
+  ───────────────────────────── */
+
+  Future<List<Map<String, dynamic>>> searchUsersByName({
+    required String query,
+    required String currentUid,
+    int limit = 10,
+  }) async {
+    if (query.isEmpty) return [];
+
+    final snapshot = await _db
+        .collection('users')
+        .where('name', isGreaterThanOrEqualTo: query)
+        .where('name', isLessThanOrEqualTo: '$query\uf8ff')
+        .limit(limit)
+        .get();
+
+    return snapshot.docs
+        .where((doc) => doc.id != currentUid)
+        .map((doc) => {
+              'uid': doc.id,
+              ...doc.data(),
+            })
+        .toList();
+  }
+
+  /* ─────────────────────────────
+   🌱 CREATE ECOCIRCLE (NEW)
+  ───────────────────────────── */
+
+  Future<void> createEcoCircle({
+    required String name,
+    required List<String> memberUids,
+    required String createdBy,
+  }) async {
+    await _db.collection('ecoCircles').add({
+      'name': name,
+      'members': memberUids,
+      'createdBy': createdBy,
+      'circleStreak': 0,
+      'createdAt': FieldValue.serverTimestamp(),
     });
   }
 
@@ -98,7 +205,6 @@ class FirestoreService {
 
     final userSnap = await userRef.get();
     final data = userSnap.data();
-
     if (data == null) return;
 
     final today = DateTime.now();
@@ -110,7 +216,6 @@ class FirestoreService {
     int currentStreak = data['currentStreak'] ?? 0;
 
     int updatedStreak;
-
     if (lastLogDate == todayKey) {
       updatedStreak = currentStreak;
     } else if (lastLogDate == yesterdayKey) {
@@ -119,7 +224,6 @@ class FirestoreService {
       updatedStreak = 1;
     }
 
-    // Save log entry
     await logRef.set({
       'type': type,
       'points': points,
@@ -127,7 +231,6 @@ class FirestoreService {
       'createdAt': FieldValue.serverTimestamp(),
     });
 
-    // Update user document
     await userRef.update({
       'ecoScore': FieldValue.increment(points),
       'currentStreak': updatedStreak,
@@ -147,43 +250,38 @@ class FirestoreService {
         .snapshots();
   }
 
+  /* ─────────────────────────────
+   REWARDS
+  ───────────────────────────── */
+
   Future<void> redeemReward({
-  required String uid,
-  required int pointsRequired,
-  required String rewardId,
-  required String rewardName,
-}) async {
-  final userRef = _db.collection('users').doc(uid);
+    required String uid,
+    required int pointsRequired,
+    required String rewardId,
+    required String rewardName,
+  }) async {
+    final userRef = _db.collection('users').doc(uid);
 
-  await _db.runTransaction((transaction) async {
-    final userSnap = await transaction.get(userRef);
+    await _db.runTransaction((transaction) async {
+      final userSnap = await transaction.get(userRef);
+      if (!userSnap.exists) throw Exception('User not found');
 
-    if (!userSnap.exists) {
-      throw Exception('User not found');
-    }
+      final currentScore = userSnap['ecoScore'] ?? 0;
+      if (currentScore < pointsRequired) {
+        throw Exception('Not enough EcoScore');
+      }
 
-    final currentScore = userSnap['ecoScore'] ?? 0;
+      transaction.update(userRef, {
+        'ecoScore': currentScore - pointsRequired,
+      });
 
-    if (currentScore < pointsRequired) {
-      throw Exception('Not enough EcoScore');
-    }
-
-    // 1️⃣ Deduct EcoScore
-    transaction.update(userRef, {
-      'ecoScore': currentScore - pointsRequired,
+      final rewardRef = userRef.collection('rewardsHistory').doc();
+      transaction.set(rewardRef, {
+        'rewardId': rewardId,
+        'rewardName': rewardName,
+        'pointsUsed': pointsRequired,
+        'redeemedAt': FieldValue.serverTimestamp(),
+      });
     });
-
-    // 2️⃣ Add reward history
-    final rewardRef = userRef
-        .collection('rewardsHistory')
-        .doc();
-
-    transaction.set(rewardRef, {
-      'rewardId': rewardId,
-      'rewardName': rewardName,
-      'pointsUsed': pointsRequired,
-      'redeemedAt': FieldValue.serverTimestamp(),
-    });
-  });
-}
+  }
 }

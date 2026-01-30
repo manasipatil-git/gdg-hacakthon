@@ -15,6 +15,9 @@ import '../widgets/leaderboard_preview.dart';
 import '../../challenges/widgets/active_challenge_card.dart';
 import '../widgets/streak_calendar_card.dart';
 
+// 🔍 Search screen
+import '../../search/screens/user_search_screen.dart';
+
 class DashboardScreen extends StatelessWidget {
   const DashboardScreen({super.key});
 
@@ -31,7 +34,6 @@ class DashboardScreen extends StatelessWidget {
     return StreamBuilder(
       stream: FirestoreService().userStream(uid),
       builder: (context, snapshot) {
-        // ⏳ Loading
         if (snapshot.connectionState == ConnectionState.waiting) {
           return const Scaffold(
             backgroundColor: AppColors.background,
@@ -39,7 +41,6 @@ class DashboardScreen extends StatelessWidget {
           );
         }
 
-        // ❌ Error
         if (snapshot.hasError || !snapshot.hasData) {
           return const Scaffold(
             backgroundColor: AppColors.background,
@@ -61,6 +62,46 @@ class DashboardScreen extends StatelessWidget {
                   // 👋 Greeting
                   GreetingHeader(
                     name: user.name.isNotEmpty ? user.name : 'there',
+                  ),
+
+                  const SizedBox(height: 12),
+
+                  // 🔍 SEARCH BAR (NEW)
+                  GestureDetector(
+                    onTap: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (_) => const UserSearchScreen(),
+                        ),
+                      );
+                    },
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 16,
+                        vertical: 14,
+                      ),
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(14),
+                        border: Border.all(
+                          color: AppColors.primary.withOpacity(0.15),
+                        ),
+                      ),
+                      child: Row(
+                        children: const [
+                          Icon(Icons.search, color: AppColors.muted),
+                          SizedBox(width: 8),
+                          Text(
+                            'Search eco friends',
+                            style: TextStyle(
+                              color: AppColors.muted,
+                              fontSize: 14,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
                   ),
 
                   const SizedBox(height: 16),
@@ -102,7 +143,7 @@ class DashboardScreen extends StatelessWidget {
 
                   const SizedBox(height: 16),
 
-                  // 🌍 Impact Highlight (Promoted Insight)
+                  // 🌍 Impact Highlight
                   Container(
                     decoration: BoxDecoration(
                       borderRadius: BorderRadius.circular(16),
@@ -119,7 +160,7 @@ class DashboardScreen extends StatelessWidget {
 
                   const SizedBox(height: 20),
 
-                  // ⚡ Secondary Actions (non-duplicating)
+                  // ⚡ Quick Actions
                   const QuickActions(),
 
                   const SizedBox(height: 24),
