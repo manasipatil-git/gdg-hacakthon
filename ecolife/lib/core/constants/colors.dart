@@ -19,4 +19,9 @@ class AppColors {
   static const accent = Color(0xFFFFE9CC);
   static const muted = Color(0xFF7D9A92);
   static const Color card = Color.fromARGB(255, 255, 245, 245);
+
+  /// Log screen category accents (modern, minimal)
+  static const logCategoryTransport = Color(0xFF2DBE91);
+  static const logCategoryFood = Color(0xFFE8A54B);
+  static const logCategoryWater = Color(0xFF4A90D9);
 }

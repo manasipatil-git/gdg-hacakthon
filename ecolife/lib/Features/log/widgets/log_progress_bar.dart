@@ -5,11 +5,17 @@ class LogProgressBar extends StatelessWidget {
   final int step;
   final int total;
 
+  /// Optional category accent for the progress bar.
+  final Color? accentColor;
+
   const LogProgressBar({
     super.key,
     required this.step,
     required this.total,
+    this.accentColor,
   });
+
+  Color get _color => accentColor ?? AppColors.primary;
 
   @override
   Widget build(BuildContext context) {
@@ -30,8 +36,8 @@ class LogProgressBar extends StatelessWidget {
           child: LinearProgressIndicator(
             value: step / total,
             minHeight: 10,
-            backgroundColor: Colors.white,
-            valueColor: AlwaysStoppedAnimation(AppColors.primary),
+            backgroundColor: AppColors.white,
+            valueColor: AlwaysStoppedAnimation(_color),
           ),
         ),
       ],
