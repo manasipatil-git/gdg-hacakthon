@@ -3,7 +3,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 
 import '../../../core/services/firestore_service.dart';
 import '../widgets/user_list_tile.dart';
-
+import '../../profile/screens/profile_screen.dart';
 class UserSearchScreen extends StatefulWidget {
   const UserSearchScreen({super.key});
 
@@ -92,6 +92,17 @@ class _UserSearchScreenState extends State<UserSearchScreen> {
                               : _onSearchChanged(_controller.text);
                         },
                       ),
+                      // ADD THIS onTap PARAMETER
+                      onTap: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (_) => ProfileScreen(
+                              userId: user['uid'],
+                            ),
+                          ),
+                        );
+                      },
                     );
                   },
                 ),
