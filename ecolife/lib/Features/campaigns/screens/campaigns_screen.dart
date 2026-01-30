@@ -1,8 +1,9 @@
 import 'package:flutter/material.dart';
 import '../../../core/models/campaign.dart';
 import '../../../core/services/campaign_service.dart';
-import 'create_campaign_screen.dart';
+import '../../../core/constants/colors.dart';
 import 'campaign_detail_screen.dart';
+import 'create_campaign_screen.dart';
 
 class CampaignsScreen extends StatelessWidget {
   const CampaignsScreen({Key? key}) : super(key: key);
@@ -10,11 +11,20 @@ class CampaignsScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: const Color(0xFFF6F7F9),
       appBar: AppBar(
-        title: const Text('Campaigns'),
+        backgroundColor: Colors.white,
+        elevation: 0,
+        title: const Text(
+          'Campaigns',
+          style: TextStyle(
+            color: Colors.black87,
+            fontWeight: FontWeight.bold,
+          ),
+        ),
         actions: [
           IconButton(
-            icon: const Icon(Icons.add),
+            icon: const Icon(Icons.add, color: Colors.black87),
             onPressed: () {
               Navigator.push(
                 context,
@@ -26,68 +36,169 @@ class CampaignsScreen extends StatelessWidget {
           ),
         ],
       ),
-      body: StreamBuilder<List<Campaign>>(
-        stream: CampaignService.getActiveCampaignsStream(),
-        builder: (context, snapshot) {
-          // 🐛 DEBUG LOGGING
-          print('🔍 Connection State: ${snapshot.connectionState}');
-          
-          if (snapshot.hasError) {
-            print('❌ Error: ${snapshot.error}');
-            return Center(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  const Icon(Icons.error, size: 60, color: Colors.red),
-                  const SizedBox(height: 16),
-                  Text('Error: ${snapshot.error}'),
-                  const SizedBox(height: 8),
-                  ElevatedButton(
-                    onPressed: () {
-                      (context as Element).markNeedsBuild();
-                    },
-                    child: const Text('Retry'),
-                  ),
-                ],
+      body: Column(
+        children: [
+          _SearchAndFilters(),
+          _TabsRow(),
+          Expanded(
+            child: StreamBuilder<List<Campaign>>(
+              stream: CampaignService.getActiveCampaignsStream(),
+              builder: (context, snapshot) {
+                if (snapshot.connectionState == ConnectionState.waiting) {
+                  return const Center(child: CircularProgressIndicator());
+                }
+
+                if (!snapshot.hasData || snapshot.data!.isEmpty) {
+                  return const Center(
+                    child: Text('No campaigns available'),
+                  );
+                }
+
+                final campaigns = snapshot.data!;
+                return ListView.builder(
+                  padding: const EdgeInsets.all(16),
+                  itemCount: campaigns.length,
+                  itemBuilder: (context, index) {
+                    return _CampaignCard(campaign: campaigns[index]);
+                  },
+                );
+              },
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+class _SearchAndFilters extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      color: Colors.white,
+      padding: const EdgeInsets.fromLTRB(16, 8, 16, 12),
+      child: Column(
+        children: [
+          // Search
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 16),
+            decoration: BoxDecoration(
+              color: const Color(0xFFF1F2F4),
+              borderRadius: BorderRadius.circular(14),
+            ),
+            child: const TextField(
+              decoration: InputDecoration(
+                icon: Icon(Icons.search),
+                hintText: 'Search campaigns...',
+                border: InputBorder.none,
               ),
-            );
-          }
+            ),
+          ),
 
-          if (snapshot.connectionState == ConnectionState.waiting) {
-            print('⏳ Loading campaigns...');
-            return const Center(child: CircularProgressIndicator());
-          }
+          const SizedBox(height: 12),
 
-          print('📊 Campaign Count: ${snapshot.data?.length ?? 0}');
-
-          if (!snapshot.hasData || snapshot.data!.isEmpty) {
-            print('⚠️ No campaigns found');
-            return const Center(
-              child: Text('No campaigns available'),
-            );
-          }
-
-          final campaigns = snapshot.data!;
-          
-          // Print each campaign for debugging
-          for (var i = 0; i < campaigns.length; i++) {
-            print('Campaign $i: ${campaigns[i].title}');
-          }
-
-          return ListView.builder(
-            padding: const EdgeInsets.all(16),
-            itemCount: campaigns.length,
-            itemBuilder: (context, index) {
-              final campaign = campaigns[index];
-              return _CampaignCard(campaign: campaign);
-            },
-          );
-        },
+          // Filters
+          SizedBox(
+            height: 40,
+            child: ListView(
+              scrollDirection: Axis.horizontal,
+              children: const [
+                _FilterChip(label: 'All', selected: true),
+                _FilterChip(label: 'Tree Plantation'),
+                _FilterChip(label: 'Beach Cleanup'),
+                _FilterChip(label: 'Recycling'),
+              ],
+            ),
+          ),
+        ],
       ),
     );
   }
 }
 
+class _FilterChip extends StatelessWidget {
+  final String label;
+  final bool selected;
+
+  const _FilterChip({
+    required this.label,
+    this.selected = false,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      margin: const EdgeInsets.only(right: 8),
+      padding: const EdgeInsets.symmetric(horizontal: 16),
+      alignment: Alignment.center,
+      decoration: BoxDecoration(
+        color: selected ? AppColors.primary : Colors.white,
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: Colors.grey.shade300),
+      ),
+      child: Text(
+        label,
+        style: TextStyle(
+          color: selected ? Colors.white : Colors.black87,
+          fontWeight: FontWeight.w600,
+        ),
+      ),
+    );
+  }
+}
+class _TabsRow extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      color: Colors.white,
+      padding: const EdgeInsets.symmetric(horizontal: 16),
+      child: Row(
+        children: const [
+          _TabItem(title: 'All Campaigns', selected: true),
+          _TabItem(title: 'Featured'),
+          _TabItem(title: 'Trending'),
+        ],
+      ),
+    );
+  }
+}
+
+class _TabItem extends StatelessWidget {
+  final String title;
+  final bool selected;
+
+  const _TabItem({
+    required this.title,
+    this.selected = false,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.only(right: 24, top: 12, bottom: 12),
+      child: Column(
+        children: [
+          Text(
+            title,
+            style: TextStyle(
+              fontWeight: FontWeight.bold,
+              color: selected ? AppColors.primary : Colors.grey,
+            ),
+          ),
+          const SizedBox(height: 4),
+          if (selected)
+            Container(
+              height: 3,
+              width: 30,
+              decoration: BoxDecoration(
+                color: AppColors.primary,
+                borderRadius: BorderRadius.circular(2),
+              ),
+            ),
+        ],
+      ),
+    );
+  }
+}
 class _CampaignCard extends StatelessWidget {
   final Campaign campaign;
 
@@ -95,187 +206,96 @@ class _CampaignCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Card(
-      margin: const EdgeInsets.only(bottom: 16),
-      clipBehavior: Clip.antiAlias,
-      elevation: 2,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(12),
-      ),
-      child: InkWell(
-        onTap: () {
-          Navigator.push(
-            context,
-            MaterialPageRoute(
-              builder: (_) => CampaignDetailScreen(campaign: campaign),
+    return GestureDetector(
+      onTap: () {
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (_) => CampaignDetailScreen(campaign: campaign),
+          ),
+        );
+      },
+      child: Container(
+        margin: const EdgeInsets.only(bottom: 20),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(20),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.08),
+              blurRadius: 12,
+              offset: const Offset(0, 6),
             ),
-          );
-        },
+          ],
+        ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Campaign Image
-            AspectRatio(
-              aspectRatio: 16 / 9,
-              child: Image.network(
-                campaign.imageUrl,
-                fit: BoxFit.cover,
-                errorBuilder: (context, error, stackTrace) {
-                  return Container(
-                    color: Colors.grey[300],
-                    child: const Icon(
-                      Icons.campaign,
-                      size: 60,
-                      color: Colors.grey,
-                    ),
-                  );
-                },
+            // Image
+            ClipRRect(
+              borderRadius: const BorderRadius.vertical(
+                top: Radius.circular(20),
+              ),
+              child: Stack(
+                children: [
+                  Image.network(
+                    campaign.imageUrl,
+                    height: 180,
+                    width: double.infinity,
+                    fit: BoxFit.cover,
+                  ),
+                  Positioned(
+                    top: 12,
+                    right: 12,
+                    child: _CategoryBadge(campaign.type.displayName),
+                  ),
+                ],
               ),
             ),
-            
-            // Campaign Details
+
             Padding(
               padding: const EdgeInsets.all(16),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  // Campaign Type Badge
-                  Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 8,
-                      vertical: 4,
-                    ),
-                    decoration: BoxDecoration(
-                      color: _getTypeColor(campaign.type).withOpacity(0.1),
-                      borderRadius: BorderRadius.circular(4),
-                    ),
-                    child: Text(
-                      campaign.type.displayName,
-                      style: TextStyle(
-                        color: _getTypeColor(campaign.type),
-                        fontSize: 12,
-                        fontWeight: FontWeight.w600,
-                      ),
+                  Text(
+                    campaign.organizationName,
+                    style: TextStyle(
+                      fontSize: 13,
+                      color: AppColors.primary,
+                      fontWeight: FontWeight.w600,
                     ),
                   ),
-                  const SizedBox(height: 12),
-                  
-                  // Campaign Title
+                  const SizedBox(height: 6),
                   Text(
                     campaign.title,
                     style: const TextStyle(
                       fontSize: 18,
                       fontWeight: FontWeight.bold,
                     ),
-                    maxLines: 2,
-                    overflow: TextOverflow.ellipsis,
                   ),
-                  const SizedBox(height: 8),
-                  
-                  // Organization Name
+                  const SizedBox(height: 12),
+
+                  LinearProgressIndicator(
+                    value: campaign.goal.progressPercentage / 100,
+                    minHeight: 8,
+                    backgroundColor: Colors.grey.shade200,
+                    valueColor: AlwaysStoppedAnimation(AppColors.primary),
+                  ),
+
+                  const SizedBox(height: 10),
+
                   Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      const Icon(Icons.business, size: 16, color: Colors.grey),
-                      const SizedBox(width: 4),
-                      Expanded(
-                        child: Text(
-                          campaign.organizationName,
-                          style: const TextStyle(
-                            fontSize: 14,
-                            color: Colors.grey,
-                          ),
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                        ),
-                      ),
-                    ],
-                  ),
-                  
-                  // Location (if available)
-                  if (campaign.location != null) ...[
-                    const SizedBox(height: 4),
-                    Row(
-                      children: [
-                        const Icon(Icons.location_on, size: 16, color: Colors.grey),
-                        const SizedBox(width: 4),
-                        Expanded(
-                          child: Text(
-                            campaign.location!,
-                            style: const TextStyle(
-                              fontSize: 14,
-                              color: Colors.grey,
-                            ),
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ],
-                  
-                  const SizedBox(height: 16),
-                  
-                  // Progress Bar
-                  Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          Text(
-                            campaign.goal.type.displayName,
-                            style: const TextStyle(
-                              fontSize: 12,
-                              fontWeight: FontWeight.w600,
-                            ),
-                          ),
-                          Text(
-                            '${campaign.goal.progressPercentage.toStringAsFixed(0)}%',
-                            style: const TextStyle(
-                              fontSize: 12,
-                              fontWeight: FontWeight.w600,
-                              color: Colors.green,
-                            ),
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 8),
-                      ClipRRect(
-                        borderRadius: BorderRadius.circular(4),
-                        child: LinearProgressIndicator(
-                          value: campaign.goal.progressPercentage / 100,
-                          minHeight: 8,
-                          backgroundColor: Colors.grey[200],
-                          valueColor: AlwaysStoppedAnimation<Color>(
-                            _getTypeColor(campaign.type),
-                          ),
-                        ),
-                      ),
-                      const SizedBox(height: 8),
                       Text(
-                        '${campaign.goal.current.toInt()} / ${campaign.goal.target.toInt()} ${campaign.goal.unit}',
+                        '${campaign.progress.participantCount} joined',
                         style: const TextStyle(
-                          fontSize: 12,
+                          fontSize: 13,
                           color: Colors.grey,
                         ),
                       ),
-                    ],
-                  ),
-                  
-                  const SizedBox(height: 16),
-                  
-                  // Participants Count
-                  Row(
-                    children: [
-                      const Icon(Icons.people, size: 16, color: Colors.blue),
-                      const SizedBox(width: 4),
-                      Text(
-                        '${campaign.progress.participantCount} participants',
-                        style: const TextStyle(
-                          fontSize: 12,
-                          color: Colors.grey,
-                        ),
-                      ),
+                      _DaysLeftBadge(campaign.endDate),
                     ],
                   ),
                 ],
@@ -286,15 +306,51 @@ class _CampaignCard extends StatelessWidget {
       ),
     );
   }
+}
+class _CategoryBadge extends StatelessWidget {
+  final String text;
+  const _CategoryBadge(this.text);
 
-  Color _getTypeColor(CampaignType type) {
-    switch (type) {
-      case CampaignType.treePlantation:
-        return Colors.green;
-      case CampaignType.cleanliness:
-        return Colors.blue;
-      case CampaignType.donation:
-        return Colors.orange;
-    }
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+      decoration: BoxDecoration(
+        color: Colors.white.withOpacity(0.9),
+        borderRadius: BorderRadius.circular(20),
+      ),
+      child: Text(
+        text,
+        style: const TextStyle(
+          fontSize: 12,
+          fontWeight: FontWeight.bold,
+        ),
+      ),
+    );
+  }
+}
+
+class _DaysLeftBadge extends StatelessWidget {
+  final DateTime endDate;
+  const _DaysLeftBadge(this.endDate);
+
+  @override
+  Widget build(BuildContext context) {
+    final daysLeft = endDate.difference(DateTime.now()).inDays;
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+      decoration: BoxDecoration(
+        color: Colors.green.shade100,
+        borderRadius: BorderRadius.circular(20),
+      ),
+      child: Text(
+        '$daysLeft days left',
+        style: const TextStyle(
+          fontSize: 12,
+          fontWeight: FontWeight.bold,
+          color: Colors.green,
+        ),
+      ),
+    );
   }
 }

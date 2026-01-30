@@ -21,8 +21,11 @@ class GreetingHeader extends StatelessWidget {
           ),
         ),
         IconButton(
-          icon: const Icon(Icons.share),
-          onPressed: () {},
+          icon: const Icon(Icons.settings),
+          tooltip: 'Settings',
+          onPressed: () {
+            Navigator.pushNamed(context, '/settings');
+          },
         ),
       ],
     );

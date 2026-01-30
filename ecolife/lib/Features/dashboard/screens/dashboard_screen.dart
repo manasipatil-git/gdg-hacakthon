@@ -159,9 +159,28 @@ class DashboardBottomNav extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final routeName = ModalRoute.of(context)?.settings.name;
+
+    int _indexForRoute(String? r) {
+      switch (r) {
+        case '/dashboard':
+          return 0;
+        case '/log':
+          return 1;
+        case '/leaderboard':
+          return 2;
+        case '/rewards':
+          return 3;
+        case '/campaigns':
+          return 4;
+        default:
+          return 0;
+      }
+    }
+
     return BottomNavigationBar(
       type: BottomNavigationBarType.fixed,
-      currentIndex: 0,
+      currentIndex: _indexForRoute(routeName),
       selectedItemColor: AppColors.primary,
       unselectedItemColor: AppColors.muted,
       onTap: (index) {
@@ -179,7 +198,7 @@ class DashboardBottomNav extends StatelessWidget {
             Navigator.pushNamed(context, '/rewards');
             break;
           case 4:
-            Navigator.pushNamed(context, '/settings');
+            Navigator.pushNamed(context, '/campaigns');
             break;
         }
       },
@@ -191,7 +210,7 @@ class DashboardBottomNav extends StatelessWidget {
         BottomNavigationBarItem(
             icon: Icon(Icons.card_giftcard), label: 'Rewards'),
         BottomNavigationBarItem(
-            icon: Icon(Icons.settings), label: 'Settings'),
+            icon: Icon(Icons.campaign), label: 'Campaigns'),
       ],
     );
   }

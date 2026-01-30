@@ -20,6 +20,9 @@ import '../features/rewards/screens/rewards_screen.dart';
 // SETTINGS
 import '../features/settings/screens/settings_screen.dart';
 
+// CAMPAIGNS
+import '../features/campaigns/screens/campaigns_screen.dart';
+
 // ONBOARDING
 import '../features/onboarding/screens/onboarding_college_screen.dart';
 import '../features/onboarding/screens/onboarding_travel_screen.dart';
@@ -89,6 +92,9 @@ class AppRouter {
 
       case '/settings':
         return MaterialPageRoute(builder: (_) => const SettingsScreen());
+
+      case '/campaigns':
+        return MaterialPageRoute(builder: (_) => const CampaignsScreen());
 
       case '/challenges':
         return MaterialPageRoute(builder: (_) => const ChallengesScreen());
