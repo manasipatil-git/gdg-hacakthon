@@ -16,6 +16,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final String currentUid =
+        FirebaseAuth.instance.currentUser!.uid;
+
     return Scaffold(
       appBar: AppBar(
         title: const Text('Settings'),
@@ -25,25 +28,27 @@ class _SettingsScreenState extends State<SettingsScreen> {
         padding: const EdgeInsets.all(16),
         child: Column(
           children: [
-            /// PROFILE CARD (clickable)
-            InkWell(
-              borderRadius: BorderRadius.circular(16),
+            /// ✅ PROFILE CARD (NOW CLICKABLE CORRECTLY)
+            SettingsProfileCard(
               onTap: () {
                 Navigator.push(
                   context,
                   MaterialPageRoute(
-                    builder: (_) => const ProfileScreen(),
+                    builder: (_) =>
+                        ProfileScreen(userId: currentUid),
                   ),
                 );
               },
-              child: const SettingsProfileCard(),
             ),
 
             const SizedBox(height: 24),
 
             /// NOTIFICATIONS
             Container(
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+              padding: const EdgeInsets.symmetric(
+                horizontal: 16,
+                vertical: 4,
+              ),
               decoration: BoxDecoration(
                 color: Colors.grey.shade100,
                 borderRadius: BorderRadius.circular(12),
@@ -52,7 +57,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 contentPadding: EdgeInsets.zero,
                 title: const Text(
                   'Notifications',
-                  style: TextStyle(fontWeight: FontWeight.w500),
+                  style:
+                      TextStyle(fontWeight: FontWeight.w500),
                 ),
                 value: notificationsEnabled,
                 onChanged: (value) {
@@ -82,7 +88,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 },
                 style: ElevatedButton.styleFrom(
                   backgroundColor: Colors.red,
-                  padding: const EdgeInsets.symmetric(vertical: 14),
+                  padding:
+                      const EdgeInsets.symmetric(vertical: 14),
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(12),
                   ),
